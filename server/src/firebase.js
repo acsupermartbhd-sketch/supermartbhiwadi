@@ -13,12 +13,19 @@ function readServiceAccount() {
   }
 }
 
+function normalizePrivateKey(value) {
+  if (!value) return value;
+  let key = String(value).trim();
+  if ((key.startsWith('"') && key.endsWith('"')) || (key.startsWith("'") && key.endsWith("'"))) key = key.slice(1, -1);
+  return key.replace(/\\n/g, "\n").replace(/\\r/g, "").replace(/\r\n/g, "\n").trim();
+}
+
 const serviceAccount = readServiceAccount();
 const databaseId = process.env.FIRESTORE_DATABASE_ID || "(default)";
 export const firebaseConfig = {
   projectId: serviceAccount?.project_id || process.env.FIREBASE_PROJECT_ID,
   clientEmail: serviceAccount?.client_email || process.env.FIREBASE_CLIENT_EMAIL,
-  privateKey: serviceAccount?.private_key?.replace(/\\n/g, "\n") || process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+  privateKey: normalizePrivateKey(serviceAccount?.private_key || process.env.FIREBASE_PRIVATE_KEY),
 };
 
 const hasFirebaseConfig = Boolean(firebaseConfig.projectId && firebaseConfig.clientEmail && firebaseConfig.privateKey);
