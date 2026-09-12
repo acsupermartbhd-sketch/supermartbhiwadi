@@ -4,10 +4,15 @@ import { getFirestore } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
 
 function readServiceAccount() {
-  const encodedServiceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
+  const encodedServiceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64?.trim();
   if (encodedServiceAccount) {
     try {
-      return JSON.parse(Buffer.from(encodedServiceAccount, "base64").toString("utf8"));
+      const decoded = Buffer.from(encodedServiceAccount.replace(/\s/g, ""), "base64").toString("utf8");
+      const account = JSON.parse(decoded);
+      if (!account.project_id || !account.client_email || !account.private_key) {
+        throw new Error("decoded service account is missing project_id, client_email, or private_key");
+      }
+      return account;
     } catch (error) {
       throw new Error(`Unable to decode FIREBASE_SERVICE_ACCOUNT_BASE64: ${error.message}`);
     }
@@ -47,13 +52,20 @@ export const firebaseConfig = {
 const hasFirebaseConfig = Boolean(firebaseConfig.projectId && firebaseConfig.clientEmail && firebaseConfig.privateKey);
 
 if (hasFirebaseConfig && !getApps().length) {
-  initializeApp({
-    credential: cert({
-      projectId: firebaseConfig.projectId,
-      clientEmail: firebaseConfig.clientEmail,
-      privateKey: firebaseConfig.privateKey,
-    }),
-  });
+  try {
+    initializeApp({
+      credential: cert({
+        projectId: firebaseConfig.projectId,
+        clientEmail: firebaseConfig.clientEmail,
+        privateKey: firebaseConfig.privateKey,
+      }),
+    });
+  } catch (error) {
+    throw new Error(
+      "Firebase credentials are invalid. Use FIREBASE_SERVICE_ACCOUNT_BASE64 with a complete service-account JSON file, not a pasted or quoted private key.",
+      { cause: error },
+    );
+  }
 }
 
 export const db = hasFirebaseConfig ? getFirestore(undefined, databaseId) : null;

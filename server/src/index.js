@@ -263,7 +263,7 @@ async function notifyOrderOnTelegram({ orderId, customer, payment, items, total 
 async function initializeFirestore() {
   if (!jwtSecret) throw new Error("JWT_SECRET is required");
   if (isProduction && (!firebaseConfig.projectId || !firebaseConfig.clientEmail || !firebaseConfig.privateKey || !process.env.JWT_SECRET || !process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD || !process.env.CLIENT_ORIGIN)) {
-    throw new Error("FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY, JWT_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD and CLIENT_ORIGIN are required in production");
+    throw new Error("FIREBASE_SERVICE_ACCOUNT_BASE64, JWT_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD and CLIENT_ORIGIN are required in production");
   }
   if (!db) {
     if (isProduction) throw new Error("Firestore is not configured. Set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY.");
