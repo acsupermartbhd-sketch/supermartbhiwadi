@@ -262,8 +262,17 @@ async function notifyOrderOnTelegram({ orderId, customer, payment, items, total 
 
 async function initializeFirestore() {
   if (!jwtSecret) throw new Error("JWT_SECRET is required");
-  if (isProduction && (!firebaseConfig.projectId || !firebaseConfig.clientEmail || !firebaseConfig.privateKey || !process.env.JWT_SECRET || !process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD || !process.env.CLIENT_ORIGIN)) {
-    throw new Error("FIREBASE_SERVICE_ACCOUNT_BASE64, JWT_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD and CLIENT_ORIGIN are required in production");
+  if (isProduction) {
+    const missing = [
+      !firebaseConfig.projectId && "FIREBASE_SERVICE_ACCOUNT_BASE64 (project_id)",
+      !firebaseConfig.clientEmail && "FIREBASE_SERVICE_ACCOUNT_BASE64 (client_email)",
+      !firebaseConfig.privateKey && "FIREBASE_SERVICE_ACCOUNT_BASE64 (private_key)",
+      !process.env.JWT_SECRET && "JWT_SECRET",
+      !process.env.ADMIN_EMAIL && "ADMIN_EMAIL",
+      !process.env.ADMIN_PASSWORD && "ADMIN_PASSWORD",
+      !process.env.CLIENT_ORIGIN && "CLIENT_ORIGIN",
+    ].filter(Boolean);
+    if (missing.length) throw new Error(`Missing production environment variables: ${missing.join(", ")}`);
   }
   if (!db) {
     if (isProduction) throw new Error("Firestore is not configured. Set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY.");
