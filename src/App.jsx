@@ -1,21 +1,21 @@
-import { useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 
 import Navbar from "./components/NavbarResponsive";
 import Footer from "./components/Footer";
 
-import Home from "./pages/Home";
-import Products from "./pages/Products";
-import ProductDetails from "./pages/ProductDetails";
-import Cart from "./pages/Cart";
-import Wishlist from "./pages/Wishlist";
-import Contact from "./pages/Contact";
-import Login from "./pages/Login";
-import Checkout from "./pages/Checkout";
-import Orders from "./pages/Orders";
-import AdminLogin from "./pages/AdminLogin";
-import AdminPanel from "./pages/AdminPanel";
+const Home = lazy(() => import("./pages/Home"));
+const Products = lazy(() => import("./pages/Products"));
+const ProductDetails = lazy(() => import("./pages/ProductDetails"));
+const Cart = lazy(() => import("./pages/Cart"));
+const Wishlist = lazy(() => import("./pages/Wishlist"));
+const Contact = lazy(() => import("./pages/Contact"));
+const Login = lazy(() => import("./pages/Login"));
+const Checkout = lazy(() => import("./pages/Checkout"));
+const Orders = lazy(() => import("./pages/Orders"));
+const AdminLogin = lazy(() => import("./pages/AdminLogin"));
+const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 import productsData from "./data/products";
 import { readCollection, writeCollection } from "./data/database";
 import { api } from "./data/api";
@@ -302,7 +302,8 @@ function App() {
       {!isAdminArea && <Navbar customerSession={customerSession} onLogout={() => setCustomerSession(null)} cartCount={cartCount} wishlistCount={wishlistCount} onContactClick={() => logContact()} onWhatsAppClick={() => logContact("whatsapp-button")} />}
 
       <div className="flex-1">
-        <Routes>
+        <Suspense fallback={<div className="flex min-h-[50vh] items-center justify-center text-sm font-bold text-slate-500">Loading Super Mart...</div>}>
+          <Routes>
 
           <Route
             path="/"
@@ -406,9 +407,10 @@ function App() {
             }
           />
 
-          <Route path="/admin-login" element={<AdminLogin onLogin={loginAdmin} />} />
+            <Route path="/admin-login" element={<AdminLogin onLogin={loginAdmin} />} />
 
-        </Routes>
+          </Routes>
+        </Suspense>
       </div>
 
       {!isAdminArea && <Footer />}
