@@ -1,0 +1,420 @@
+import { useCallback, useEffect, useState } from "react";
+import { Routes, Route, useLocation } from "react-router-dom";
+import { onAuthStateChanged } from "firebase/auth";
+
+import Navbar from "./components/NavbarResponsive";
+import Footer from "./components/Footer";
+
+import Home from "./pages/Home";
+import Products from "./pages/Products";
+import ProductDetails from "./pages/ProductDetails";
+import Cart from "./pages/Cart";
+import Wishlist from "./pages/Wishlist";
+import Contact from "./pages/Contact";
+import Login from "./pages/Login";
+import Checkout from "./pages/Checkout";
+import Orders from "./pages/Orders";
+import AdminLogin from "./pages/AdminLogin";
+import AdminPanel from "./pages/AdminPanel";
+import productsData from "./data/products";
+import { readCollection, writeCollection } from "./data/database";
+import { api } from "./data/api";
+import { firebaseAuth } from "./data/firebase";
+
+const starterShopReviews = [
+  ["Riya Mehta", 5, "Smooth ordering, quick delivery and very helpful support."],
+  ["Amit Sharma", 5, "Good prices and the product arrived safely packed."],
+  ["Neha Gupta", 5, "The team answered my questions patiently. Great local service."],
+  ["Rahul Verma", 4, "Easy checkout and delivery was right on time."],
+  ["Pooja Jain", 5, "Very professional experience from order to delivery."],
+  ["Karan Singh", 5, "The product quality was exactly as shown on the website."],
+  ["Simran Kaur", 4, "Fast response on WhatsApp and a hassle-free purchase."],
+  ["Vikas Yadav", 5, "Best electronics shopping experience in Bhiwadi so far."],
+  ["Anjali Saini", 5, "Clean packaging, polite delivery and a great product."],
+  ["Mohit Kumar", 4, "The order tracking and updates were very useful."],
+  ["Shweta Sharma", 5, "Super Mart made buying electronics feel simple."],
+  ["Deepak Arora", 5, "Excellent value and the item reached me in perfect condition."],
+  ["Nisha Rawat", 4, "Friendly team and a simple, reliable shopping experience."],
+  ["Arjun Bansal", 5, "Loved the quick delivery and genuine product."],
+  ["Priya Choudhary", 5, "The website was easy to use and support was responsive."],
+  ["Sahil Khan", 4, "Good service, good communication and fair pricing."],
+  ["Meena Joshi", 5, "A dependable local store for laptops and accessories."],
+  ["Tarun Goyal", 5, "Everything was smooth. I will shop here again."],
+].map(([name, rating, text], index) => ({ id: `seed-shop-${index + 1}`, type: "shop", name, rating, text, createdAt: "2026-09-01T10:00:00.000Z" }));
+
+function readReviews() {
+  const storedReviews = readCollection("reviews", []);
+  return storedReviews.some((review) => String(review.id).startsWith("seed-shop-")) ? storedReviews : [...starterShopReviews, ...storedReviews];
+}
+
+function mergeRemoteOrders(remoteOrders, currentOrders) {
+  const mergedOrders = remoteOrders.map((remoteOrder) => {
+    const localOrder = currentOrders.find((order) => order.id === remoteOrder.id);
+    return remoteOrder.items?.length || !localOrder?.items?.length
+      ? remoteOrder
+      : { ...localOrder, ...remoteOrder, items: localOrder.items };
+  });
+  return [...mergedOrders, ...currentOrders.filter((order) => !remoteOrders.some((remoteOrder) => remoteOrder.id === order.id))];
+}
+
+function App() {
+  const [products, setProducts] = useState(() => readCollection("products", productsData));
+  const [cart, setCart] = useState(() => readCollection("cart", []));
+  const [wishlist, setWishlist] = useState(() => readCollection("wishlist", []));
+  const [orders, setOrders] = useState(() => readCollection("orders", []));
+  const [reviews, setReviews] = useState(readReviews);
+  const [contactEvents, setContactEvents] = useState(() => readCollection("contact-events", []));
+  const [adminSession, setAdminSession] = useState(() => {
+    const session = readCollection("admin-session", null);
+    return session?.token ? session : null;
+  });
+  const [customerSession, setCustomerSession] = useState(() => readCollection("customer-session", null));
+
+  useEffect(() => writeCollection("products", products), [products]);
+  useEffect(() => writeCollection("cart", cart), [cart]);
+  useEffect(() => writeCollection("wishlist", wishlist), [wishlist]);
+  useEffect(() => writeCollection("orders", orders), [orders]);
+  useEffect(() => writeCollection("reviews", reviews), [reviews]);
+  useEffect(() => writeCollection("contact-events", contactEvents), [contactEvents]);
+  useEffect(() => writeCollection("admin-session", adminSession), [adminSession]);
+  useEffect(() => writeCollection("customer-session", customerSession), [customerSession]);
+  useEffect(() => {
+    api.getProducts().then((remoteProducts) => {
+      if (remoteProducts.length) setProducts(remoteProducts);
+    }).catch(() => undefined);
+    api.getReviews().then((remoteReviews) => {
+      if (remoteReviews.length) setReviews(remoteReviews);
+    }).catch(() => undefined);
+  }, []);
+  useEffect(() => {
+    if (!adminSession?.token) {
+      return;
+    }
+    api.getOrders(adminSession.token).then((remoteOrders) => {
+      setOrders((currentOrders) => mergeRemoteOrders(remoteOrders, currentOrders));
+    }).catch(() => undefined);
+    api.getContactEvents(adminSession.token).then(setContactEvents).catch(() => undefined);
+    api.getAdminReviews(adminSession.token).then(setReviews).catch(() => undefined);
+  }, [adminSession]);
+  useEffect(() => {
+    return onAuthStateChanged(firebaseAuth, async (user) => {
+      if (!user) {
+        setCustomerSession(null);
+        return;
+      }
+      try {
+        const token = await user.getIdToken();
+        const result = await api.firebaseSync({ name: user.displayName, phone: user.phoneNumber || "" }, token);
+        setCustomerSession({ ...result.customer, token: result.token });
+      } catch {
+        if (import.meta.env.DEV) setCustomerSession({ id: `firebase:${user.uid}`, name: user.displayName || user.email?.split("@")[0], email: user.email, phone: user.phoneNumber || "", token: await user.getIdToken() });
+        else setCustomerSession(null);
+      }
+    });
+  }, []);
+  useEffect(() => {
+    if (!customerSession?.token) return;
+    const loadCustomerOrders = () => api.getCustomerOrders(customerSession.token).then((customerOrders) => {
+      setOrders((currentOrders) => [...mergeRemoteOrders(customerOrders, currentOrders), ...currentOrders.filter((order) => !customerOrders.some((remoteOrder) => remoteOrder.id === order.id))]);
+    }).catch(() => undefined);
+    loadCustomerOrders();
+    const refreshTimer = window.setInterval(loadCustomerOrders, 15000);
+    return () => window.clearInterval(refreshTimer);
+  }, [customerSession]);
+
+  // Add product to cart
+  const addToCart = (product) => {
+    setCart((currentCart) => {
+      const existing = currentCart.find(
+        (item) => item.id === product.id
+      );
+
+      if (existing) {
+        return currentCart.map((item) =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+
+      return [
+        ...currentCart,
+        {
+          ...product,
+          quantity: 1,
+        },
+      ];
+    });
+  };
+
+  // Update quantity
+  const updateQuantity = (id, quantity) => {
+    if (quantity <= 0) {
+      removeFromCart(id);
+      return;
+    }
+
+    setCart((currentCart) =>
+      currentCart.map((item) =>
+        item.id === id
+          ? { ...item, quantity }
+          : item
+      )
+    );
+  };
+
+  // Remove cart item
+  const removeFromCart = (id) => {
+    setCart((currentCart) =>
+      currentCart.filter((item) => item.id !== id)
+    );
+  };
+
+  // Wishlist
+  const addToWishlist = (product) => {
+    setWishlist((currentWishlist) => {
+      const exists = currentWishlist.some(
+        (item) => item.id === product.id
+      );
+
+      if (exists) {
+        return currentWishlist.filter(
+          (item) => item.id !== product.id
+        );
+      }
+
+      return [...currentWishlist, product];
+    });
+  };
+
+  const cartCount = cart.reduce(
+    (total, item) => total + item.quantity,
+    0
+  );
+
+  const wishlistCount = wishlist.length;
+  const addReview = async (review) => {
+    const savedReview = await api.createReview(review, customerSession?.token);
+    setReviews((current) => [savedReview, ...current.filter((item) => item.id !== savedReview.id)]);
+    return savedReview;
+  };
+
+  const saveAdminReview = async (review, id) => {
+    const savedReview = await api.saveReview(review, adminSession?.token, id);
+    setReviews((current) => id ? current.map((item) => item.id === id ? savedReview : item) : [savedReview, ...current]);
+    return savedReview;
+  };
+
+  const deleteAdminReview = async (id) => {
+    await api.deleteReview(id, adminSession?.token);
+    setReviews((current) => current.filter((review) => review.id !== id));
+  };
+
+  const logContact = (source = "website-call-button") => {
+    const event = { id: Date.now(), contact_number: "+91 95490 92686", source, created_at: new Date().toISOString() };
+    setContactEvents((current) => [event, ...current]);
+    api.logContactEvent({ contactNumber: event.contact_number, source: event.source }).catch(() => undefined);
+  };
+
+  const location = useLocation();
+  const isAdminArea = location.pathname.startsWith("/admin");
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [location.pathname, location.search]);
+
+  const loginAdmin = async ({ email, password }) => {
+    try {
+      const result = await api.login({ email, password });
+      setAdminSession({ ...result.admin, token: result.token, loggedInAt: new Date().toISOString() });
+      return true;
+    } catch {
+      if (!import.meta.env.DEV) return false;
+      if (email !== "admin@supermart.com" || password !== "admin123") return false;
+      setAdminSession({ email, role: "admin", token: null, loggedInAt: new Date().toISOString() });
+      return true;
+    }
+  };
+
+  const loginCustomer = async (credentials) => {
+    const token = await credentials.user.getIdToken();
+    try {
+      const result = await api.firebaseSync({ name: credentials.user.displayName, phone: credentials.user.phoneNumber || "" }, token);
+      setCustomerSession({ ...result.customer, token: result.token });
+    } catch (error) {
+      if (!import.meta.env.DEV) throw error;
+      setCustomerSession({ id: `firebase:${credentials.user.uid}`, name: credentials.user.displayName || credentials.user.email?.split("@")[0], email: credentials.user.email, phone: credentials.user.phoneNumber || "", token });
+    }
+    return true;
+  };
+
+  const signupCustomer = async (details) => {
+    const token = await details.user.getIdToken();
+    try {
+      const result = await api.firebaseSync({ name: details.name, phone: details.phone }, token);
+      setCustomerSession({ ...result.customer, token: result.token });
+    } catch (error) {
+      if (!import.meta.env.DEV) throw error;
+      setCustomerSession({ id: `firebase:${details.user.uid}`, name: details.name, email: details.user.email, phone: details.phone, token });
+    }
+    return true;
+  };
+
+  const refreshOrders = useCallback(async () => {
+    if (!adminSession?.token) {
+      return;
+    }
+    try {
+      const remoteOrders = await api.getOrders(adminSession.token);
+      setOrders((currentOrders) => mergeRemoteOrders(remoteOrders, currentOrders));
+    } catch {
+      // Keep locally saved orders visible when the API is temporarily unavailable.
+    }
+  }, [adminSession]);
+
+  const placeOrder = async (orderDetails) => {
+    try {
+      const savedOrder = await api.createOrder({ ...orderDetails, customerId: customerSession?.id, items: cart }, customerSession?.token);
+      const order = { ...orderDetails, ...savedOrder, items: savedOrder.items?.length ? savedOrder.items : cart, createdAt: savedOrder.createdAt || new Date().toISOString() };
+      setOrders((currentOrders) => [order, ...currentOrders]);
+      setCart([]);
+      return order;
+    } catch (error) {
+      if (orderDetails.payment === "online") throw error;
+      // Keep the demo storefront usable when the API is not running locally.
+    }
+    const order = {
+      ...orderDetails,
+      id: `SM-${Date.now().toString().slice(-6)}`,
+      items: cart,
+      total: cart.reduce((sum, item) => sum + item.price * item.quantity, 0),
+      createdAt: new Date().toISOString(),
+      status: "Processing",
+    };
+    setOrders((currentOrders) => [order, ...currentOrders]);
+    setCart([]);
+    return order;
+  };
+
+  return (
+    <div className="flex min-h-screen flex-col">
+
+      {!isAdminArea && <Navbar customerSession={customerSession} onLogout={() => setCustomerSession(null)} cartCount={cartCount} wishlistCount={wishlistCount} onContactClick={() => logContact()} onWhatsAppClick={() => logContact("whatsapp-button")} />}
+
+      <div className="flex-1">
+        <Routes>
+
+          <Route
+            path="/"
+            element={
+              <Home
+                products={products}
+                addToCart={addToCart}
+                addToWishlist={addToWishlist}
+                reviews={reviews}
+                addReview={addReview}
+                orders={orders}
+                customerSession={customerSession}
+              />
+            }
+          />
+
+          <Route
+            path="/products"
+            element={
+              <Products
+                products={products}
+                addToCart={addToCart}
+                addToWishlist={addToWishlist}
+              />
+            }
+          />
+
+          <Route
+            path="/products/:category"
+            element={
+              <Products
+                products={products}
+                addToCart={addToCart}
+                addToWishlist={addToWishlist}
+              />
+            }
+          />
+
+          <Route
+            path="/product/:id"
+            element={
+              <ProductDetails
+                products={products}
+                addToCart={addToCart}
+                addToWishlist={addToWishlist}
+                wishlist={wishlist}
+                reviews={reviews}
+                addReview={addReview}
+                orders={orders}
+                customerSession={customerSession}
+              />
+            }
+          />
+
+          <Route
+            path="/cart"
+            element={
+              <Cart
+                cart={cart}
+                updateQuantity={updateQuantity}
+                removeFromCart={removeFromCart}
+              />
+            }
+          />
+
+          <Route
+            path="/wishlist"
+            element={
+              <Wishlist
+                wishlist={wishlist}
+                addToCart={addToCart}
+                addToWishlist={addToWishlist}
+              />
+            }
+          />
+
+          <Route
+            path="/contact"
+            element={<Contact onContactClick={logContact} />}
+          />
+
+          <Route
+            path="/login"
+            element={<Login onLogin={loginCustomer} onSignup={signupCustomer} />}
+          />
+
+          <Route
+            path="/checkout"
+            element={customerSession ? <Checkout cart={cart} placeOrder={placeOrder} customer={customerSession} /> : <Login onLogin={loginCustomer} onSignup={signupCustomer} />}
+          />
+
+          <Route
+            path="/orders"
+            element={customerSession ?             <Orders orders={orders} customer={customerSession} products={products} /> : <Login onLogin={loginCustomer} onSignup={signupCustomer} />}
+          />
+
+          <Route
+            path="/admin"
+            element={
+              adminSession ? <AdminPanel products={products} setProducts={setProducts} orders={orders} setOrders={setOrders} reviews={reviews} setReviews={setReviews} onSaveReview={saveAdminReview} onDeleteReview={deleteAdminReview} contactEvents={contactEvents} token={adminSession.token} refreshOrders={refreshOrders} onLogout={() => setAdminSession(null)} /> : <AdminLogin onLogin={loginAdmin} />
+            }
+          />
+
+          <Route path="/admin-login" element={<AdminLogin onLogin={loginAdmin} />} />
+
+        </Routes>
+      </div>
+
+      {!isAdminArea && <Footer />}
+
+    </div>
+  );
+}
+
+export default App;
