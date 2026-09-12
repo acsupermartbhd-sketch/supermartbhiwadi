@@ -30,21 +30,18 @@ Firebase ID tokens are verified for customer sync and customer API routes.
 See `firestore-schema.md` for the document layout. Orders embed their items in
 the order document.
 
-## WhatsApp order notifications
+## Telegram notifications
 
 Optional server-only settings:
 
 ```env
-WHATSAPP_ACCESS_TOKEN=your_meta_cloud_api_token
-WHATSAPP_PHONE_NUMBER_ID=your_whatsapp_business_phone_number_id
-WHATSAPP_ADMIN_PHONE_NUMBER=919549092686
-WHATSAPP_API_VERSION=v21.0
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+TELEGRAM_CHAT_ID=your_telegram_chat_id
 ```
 
 After an order is saved to Firestore, the API sends the customer and product
-summary to `WHATSAPP_ADMIN_PHONE_NUMBER`. Keep the access token only on the
-server. Production messages may require an approved WhatsApp template and
-recipient opt-in.
+summary to the configured Telegram chat. Inquiry submissions are sent there
+as well. Keep the bot token only on the server.
 
 ## Frontend
 

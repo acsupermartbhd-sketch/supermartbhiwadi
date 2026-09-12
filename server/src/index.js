@@ -236,87 +236,28 @@ async function getCustomerIdentity(request) {
   }
 }
 
-async function notifyOrderOnWhatsApp({ orderId, customer, payment, items, total }) {
-  const accessToken = process.env.WHATSAPP_ACCESS_TOKEN;
-  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
-  const recipient = process.env.WHATSAPP_ADMIN_PHONE_NUMBER;
-  if (!accessToken || !phoneNumberId || !recipient || accessToken === "your_token_here" || phoneNumberId === "your_phone_number_id") return false;
-  const itemLines = items.map((item) => `- ${item.name} x ${item.quantity}: Rs ${numberValue(item.price * item.quantity).toLocaleString("en-IN")}`).join("\n");
-  const message = [
-    "New Super Mart order", `Order: ${orderId}`, "", `Customer: ${customer.name}`,
-    `Phone: ${customer.phone}`, `Email: ${customer.email}`,
-    `Address: ${customer.address}, ${customer.city || "Bhiwadi"}, ${customer.state || "Rajasthan"} - ${customer.pincode}`,
-    `Payment: ${(payment || "cod").toUpperCase()}`, "", "Products:", itemLines, "",
-    `Total: Rs ${numberValue(total).toLocaleString("en-IN")}`,
-  ].join("\n");
-  const apiVersion = process.env.WHATSAPP_API_VERSION || "v21.0";
-  const result = await fetch(`https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ messaging_product: "whatsapp", recipient_type: "individual", to: recipient.replace(/\D/g, ""), type: "text", text: { preview_url: false, body: message } }),
-  });
-  if (!result.ok) throw new Error(`WhatsApp API returned ${result.status}: ${await result.text()}`);
-  return true;
-}
-
-async function notifyTelegram(message) {
+async function notifyOnTelegram(message) {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chatId || token === "your_bot_token_here" || chatId === "your_chat_id_here") return false;
+  if (!token || !chatId || token === "your_telegram_bot_token") return false;
   const result = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text: message, disable_web_page_preview: true }),
+    body: JSON.stringify({ chat_id: chatId, text: message }),
   });
   if (!result.ok) throw new Error(`Telegram API returned ${result.status}: ${await result.text()}`);
   return true;
 }
 
-async function notifyTelegramOrder(message, items) {
-  await notifyTelegram(message);
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chatId) return;
-  for (const item of items.filter((product) => product.image)) {
-    const result = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        photo: item.image,
-        caption: `${item.name}\nCode: ${item.productCode || "Not provided"}\nQty: ${item.quantity}\nPrice: Rs ${numberValue(item.price).toLocaleString("en-IN")}`,
-      }),
-    });
-    if (!result.ok) throw new Error(`Telegram image API returned ${result.status}: ${await result.text()}`);
-  }
-}
-
-function orderTelegramMessage({ orderId, customer, payment, items, total, status }) {
-  const itemLines = items.map((item, index) => [
-    `${index + 1}. ${item.name}`,
-    `   Code: ${item.productCode || "Not provided"}`,
-    `   Qty: ${item.quantity} x Rs ${numberValue(item.price).toLocaleString("en-IN")}`,
-    `   Image: ${item.image || "Not provided"}`,
-  ].join("\n")).join("\n");
-  return [
-    "🛒 NEW SUPERMART ORDER",
-    `Order ID: ${orderId}`,
-    `Date: ${new Date().toLocaleString("en-IN")}`,
-    `Status: ${status}`,
-    "",
-    "CUSTOMER",
-    `Name: ${customer.name}`,
-    `Phone: ${customer.phone}`,
-    `Email: ${customer.email}`,
-    `Address: ${customer.address}, ${customer.city}, ${customer.state} - ${customer.pincode}`,
-    "",
-    `Payment: ${(payment || "cod").toUpperCase()}`,
-    "",
-    "PRODUCTS",
-    itemLines,
-    "",
-    `TOTAL: Rs ${numberValue(total).toLocaleString("en-IN")}`,
-  ].join("\n");
+async function notifyOrderOnTelegram({ orderId, customer, payment, items, total }) {
+  const itemLines = items.map((item) => `- ${item.name} x ${item.quantity}: Rs ${numberValue(item.price * item.quantity).toLocaleString("en-IN")}`).join("\n");
+  return notifyOnTelegram([
+    "New Super Mart order", `Order: ${orderId}`, "", `Customer: ${customer.name}`,
+    `Phone: ${customer.phone}`, `Email: ${customer.email}`,
+    `Address: ${customer.address}, ${customer.city || "Bhiwadi"}, ${customer.state || "Rajasthan"} - ${customer.pincode}`,
+    `Payment: ${(payment || "cod").toUpperCase()}`, "", "Products:", itemLines, "",
+    `Total: Rs ${numberValue(total).toLocaleString("en-IN")}`,
+  ].join("\n"));
 }
 
 async function initializeFirestore() {
@@ -577,8 +518,7 @@ app.post("/api/orders", async (request, response, next) => {
       createdAt: new Date(), updatedAt: new Date(),
     };
     await collection("orders").doc(orderId).create(order);
-    notifyOrderOnWhatsApp({ orderId, customer: order.customer, payment: order.payment, items: normalizedItems, total }).catch((error) => console.error("WhatsApp order notification failed:", error.message));
-    notifyTelegramOrder(orderTelegramMessage({ orderId, customer: order.customer, payment: order.payment, items: normalizedItems, total, status: order.status }), normalizedItems).catch((error) => console.error("Telegram order notification failed:", error.message));
+    notifyOrderOnTelegram({ orderId, customer: order.customer, payment: order.payment, items: normalizedItems, total }).catch((error) => console.error("Telegram order notification failed:", error.message));
     response.status(201).json({
       id: orderId,
       total,
@@ -597,19 +537,10 @@ app.post("/api/inquiries", async (request, response, next) => {
     if (!name || !email || !subject || !message) return response.status(400).json({ error: "Name, email, subject and message are required" });
     const inquiry = { name: String(name).trim(), email: String(email).trim().toLowerCase(), phone: String(phone || "").trim(), subject: String(subject).trim(), message: String(message).trim(), createdAt: new Date() };
     const reference = await collection("inquiries").add(inquiry);
-    const telegramMessage = [
-      "📩 NEW SUPERMART INQUIRY",
-      `Date: ${new Date().toLocaleString("en-IN")}`,
-      "",
-      `Name: ${inquiry.name}`,
-      `Email: ${inquiry.email}`,
-      `Phone: ${inquiry.phone || "Not provided"}`,
-      `Subject: ${inquiry.subject}`,
-      "",
-      "Message:",
-      inquiry.message,
-    ].join("\n");
-    notifyTelegram(telegramMessage).catch((error) => console.error("Telegram inquiry notification failed:", error.message));
+    notifyOnTelegram([
+      "New Super Mart inquiry", `Name: ${inquiry.name}`, `Phone: ${inquiry.phone || "Not provided"}`,
+      `Email: ${inquiry.email}`, `Subject: ${inquiry.subject}`, "", inquiry.message,
+    ].join("\n")).catch((error) => console.error("Telegram inquiry notification failed:", error.message));
     response.status(201).json({ id: reference.id, message: "Inquiry received" });
   } catch (error) { next(error); }
 });
