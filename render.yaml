@@ -25,6 +25,8 @@ services:
         sync: false
       - key: FIREBASE_PRIVATE_KEY
         sync: false
+      - key: FIREBASE_SERVICE_ACCOUNT_BASE64
+        sync: false
       - key: FIRESTORE_DATABASE_ID
         value: "(default)"
       - key: RAZORPAY_KEY_ID

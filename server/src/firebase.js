@@ -4,6 +4,22 @@ import { getFirestore } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
 
 function readServiceAccount() {
+  const encodedServiceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_BASE64;
+  if (encodedServiceAccount) {
+    try {
+      return JSON.parse(Buffer.from(encodedServiceAccount, "base64").toString("utf8"));
+    } catch (error) {
+      throw new Error(`Unable to decode FIREBASE_SERVICE_ACCOUNT_BASE64: ${error.message}`);
+    }
+  }
+  const jsonServiceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  if (jsonServiceAccount) {
+    try {
+      return JSON.parse(jsonServiceAccount);
+    } catch (error) {
+      throw new Error(`Unable to parse FIREBASE_SERVICE_ACCOUNT_JSON: ${error.message}`);
+    }
+  }
   const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
   if (!serviceAccountPath) return null;
   try {
