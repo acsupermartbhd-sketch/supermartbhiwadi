@@ -10,9 +10,10 @@
 
 * { box-sizing: border-box; }
 html, body, #root { width: 100%; max-width: 100%; overflow-x: clip; }
-body { margin: 0; min-width: 320px; background: #f6f8fb; }
+body { margin: 0; min-width: 320px; background: #f6f8fb; user-select: none; -webkit-user-select: none; }
 img { max-width: 100%; }
 button, input, textarea, select { font: inherit; }
+input, textarea, select, [contenteditable="true"] { user-select: text; -webkit-user-select: text; }
 button, a { -webkit-tap-highlight-color: transparent; }
 
 .page-shell { min-height: calc(100vh - 160px); padding: 3.5rem 1.25rem; background: radial-gradient(circle at 85% 8%, #e1ecff 0, transparent 28rem), #f6f8fb; }
