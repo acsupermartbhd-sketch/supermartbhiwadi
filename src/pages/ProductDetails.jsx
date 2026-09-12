@@ -92,11 +92,14 @@ function ProductDetails({ products, addToCart, addToWishlist, wishlist = [], rev
             <img
               src={images[selectedImage] || product.image}
               alt={product.name}
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
               className="h-full w-full object-contain"
             />
             </div>
             <div className="product-thumbnails mt-3 grid grid-cols-5 gap-1.5 sm:gap-2">
-              {images.map((image, index) => <button key={image} type="button" onClick={() => setSelectedImage(index)} className={`product-thumbnail aspect-square overflow-hidden rounded-lg border-2 ${selectedImage === index ? "border-blue-600" : "border-transparent"}`}><img src={image} alt={`${product.name} view ${index + 1}`} className="h-full w-full object-contain" /></button>)}
+              {images.map((image, index) => <button key={image} type="button" onClick={() => setSelectedImage(index)} className={`product-thumbnail aspect-square overflow-hidden rounded-lg border-2 ${selectedImage === index ? "border-blue-600" : "border-transparent"}`}><img src={image} alt={`${product.name} view ${index + 1}`} loading="lazy" decoding="async" className="h-full w-full object-contain" /></button>)}
             </div>
           </div>
 

@@ -35,6 +35,8 @@ function ProductCard({ product, addToCart, addToWishlist }) {
         <img
           src={product.image}
           alt={product.name}
+          loading="lazy"
+          decoding="async"
           className="product-image h-full w-full object-contain transition duration-500 group-hover:scale-105"
         />
 

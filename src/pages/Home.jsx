@@ -94,7 +94,7 @@ function Home({ products, addToCart, addToWishlist, reviews = [] }) {
             </div>
           </div>
           {heroSlides[visibleSlide] && <div className="absolute inset-0 overflow-hidden rounded-3xl border border-white/20 bg-slate-950/30 shadow-2xl">
-            <img src={heroSlides[visibleSlide].image} alt={heroSlides[visibleSlide].isStorefront ? "Super Mart storefront in Bhiwadi" : heroSlides[visibleSlide].product.name} className="h-full w-full object-cover brightness-75 transition duration-700" />
+            <img src={heroSlides[visibleSlide].image} alt={heroSlides[visibleSlide].isStorefront ? "Super Mart storefront in Bhiwadi" : heroSlides[visibleSlide].product.name} loading="eager" fetchPriority="high" decoding="async" className="h-full w-full object-cover brightness-75 transition duration-700" />
           </div>}
         </div>
       </section>
