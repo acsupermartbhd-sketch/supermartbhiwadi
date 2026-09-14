@@ -16,6 +16,7 @@ const Checkout = lazy(() => import("./pages/Checkout"));
 const Orders = lazy(() => import("./pages/Orders"));
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 import productsData from "./data/products";
 import { readCollection, writeCollection } from "./data/database";
 import { api } from "./data/api";
@@ -48,13 +49,24 @@ function readReviews() {
 }
 
 function mergeRemoteOrders(remoteOrders, currentOrders) {
+  const localById = new Map(currentOrders.map((order) => [String(order.id), order]));
   const mergedOrders = remoteOrders.map((remoteOrder) => {
-    const localOrder = currentOrders.find((order) => order.id === remoteOrder.id);
+    const localOrder = localById.get(String(remoteOrder.id));
     return remoteOrder.items?.length || !localOrder?.items?.length
       ? remoteOrder
       : { ...localOrder, ...remoteOrder, items: localOrder.items };
   });
-  return [...mergedOrders, ...currentOrders.filter((order) => !remoteOrders.some((remoteOrder) => remoteOrder.id === order.id))];
+  const remoteIds = new Set(remoteOrders.map((order) => String(order.id)));
+  const retainedLocalOrders = currentOrders.filter((order) => !remoteIds.has(String(order.id)));
+  return [...new Map([...mergedOrders, ...retainedLocalOrders].map((order) => [String(order.id), order])).values()];
+}
+
+function hasSeenLaunchScreen() {
+  try {
+    return window.localStorage.getItem("supermart-launch-seen") === "true";
+  } catch {
+    return false;
+  }
 }
 
 function App() {
@@ -69,6 +81,18 @@ function App() {
     return session?.token ? session : null;
   });
   const [customerSession, setCustomerSession] = useState(() => readCollection("customer-session", null));
+  const [showLaunchScreen, setShowLaunchScreen] = useState(() => !hasSeenLaunchScreen());
+
+  useEffect(() => {
+    if (!showLaunchScreen) return undefined;
+    try {
+      window.localStorage.setItem("supermart-launch-seen", "true");
+    } catch {
+      // Continue without persistence when browser storage is unavailable.
+    }
+    const timer = window.setTimeout(() => setShowLaunchScreen(false), 1800);
+    return () => window.clearTimeout(timer);
+  }, [showLaunchScreen]);
 
   useEffect(() => writeCollection("products", products), [products]);
   useEffect(() => writeCollection("cart", cart), [cart]);
@@ -115,7 +139,7 @@ function App() {
   useEffect(() => {
     if (!customerSession?.token) return;
     const loadCustomerOrders = () => api.getCustomerOrders(customerSession.token).then((customerOrders) => {
-      setOrders((currentOrders) => [...mergeRemoteOrders(customerOrders, currentOrders), ...currentOrders.filter((order) => !customerOrders.some((remoteOrder) => remoteOrder.id === order.id))]);
+      setOrders((currentOrders) => mergeRemoteOrders(customerOrders, currentOrders));
     }).catch(() => undefined);
     loadCustomerOrders();
     const refreshTimer = window.setInterval(loadCustomerOrders, 15000);
@@ -299,6 +323,14 @@ function App() {
   return (
     <div className="flex min-h-screen flex-col">
 
+      {showLaunchScreen && <div className="launch-screen" role="status" aria-label="Loading Super Mart">
+        <div className="launch-brand">
+          <img src="/img/logo.svg" alt="" className="launch-mark" />
+          <span>Super <b>Mart</b></span>
+        </div>
+        <div className="launch-progress" aria-hidden="true"><i /></div>
+      </div>}
+
       {!isAdminArea && <Navbar customerSession={customerSession} onLogout={() => setCustomerSession(null)} cartCount={cartCount} wishlistCount={wishlistCount} onContactClick={() => logContact()} onWhatsAppClick={() => logContact("whatsapp-button")} />}
 
       <div className="flex-1">
@@ -408,6 +440,8 @@ function App() {
           />
 
             <Route path="/admin-login" element={<AdminLogin onLogin={loginAdmin} />} />
+
+            <Route path="*" element={<NotFound />} />
 
           </Routes>
         </Suspense>

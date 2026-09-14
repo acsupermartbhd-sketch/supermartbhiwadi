@@ -37,13 +37,13 @@ function Contact({ onContactClick }) {
             <section className="surface p-6 sm:p-8">
               <h2 className="text-2xl font-black text-slate-950">Contact information</h2>
               <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-1">
-                <a href="https://www.google.com/maps/search/?api=1&query=FG+19-20+Capital+High+Street+Bhiwadi+Alwar+Rajasthan+301019" target="_blank" rel="noreferrer" className="contact-item"><span className="contact-icon">⌖</span><span><b>Visit our store</b><small>FG 19-20, Capital High Street<br />Bhiwadi, Alwar, Rajasthan 301019</small></span></a>
+                <a href="https://www.google.com/maps/search/?api=1&query=FGF+19-20+Capital+High+Street+Bhiwadi+Alwar+Rajasthan+301019" target="_blank" rel="noreferrer" className="contact-item"><span className="contact-icon">⌖</span><span><b>Visit our store</b><small>FGF 19-20, Capital High Street<br />Bhiwadi, Alwar, Rajasthan 301019</small></span></a>
                 <a href="tel:+919549092686" onClick={onContactClick} className="contact-item"><span className="contact-icon">☎</span><span><b>Call us</b><small>+91 95490 92686<br />Mon–Sat, 10:00 AM–7:00 PM</small></span></a>
                 <a href="mailto:supermartbhiwadi@gmail.com" className="contact-item"><span className="contact-icon">@</span><span><b>Email support</b><small>supermartbhiwadi@gmail.com<br />We reply within one business day</small></span></a>
               </div>
             </section>
             <div className="overflow-hidden rounded-[1.25rem] border border-slate-200 bg-white shadow-sm">
-              <iframe title="SuperMart location at FG 19-20, Capital High Street" src="https://www.google.com/maps?q=FG%2019-20%20Capital%20High%20Street%20Bhiwadi%20Alwar%20Rajasthan%20301019&output=embed" className="h-72 w-full border-0 sm:h-80" loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+              <iframe title="SuperMart location at FGF 19-20, Capital High Street" src="https://www.google.com/maps?q=FGF%2019-20%20Capital%20High%20Street%20Bhiwadi%20Alwar%20Rajasthan%20301019&output=embed" className="h-72 w-full border-0 sm:h-80" loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
             </div>
           </div>
 

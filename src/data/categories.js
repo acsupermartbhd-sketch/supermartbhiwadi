@@ -1,33 +1,53 @@
 const categories = [
   {
-    name: "Laptops & PC",
+    name: "Desktop",
     icon: "💻",
-    children: ["Laptops", "Desktop PC", "Gaming PC", "SSD", "Keyboard", "Mouse", "RAM", "Laptop Charger"],
+    children: ["Desktop CPU", "Desktop RAM (Memory)", "Graphic Card", "Cabinet", "Cabinet Fan", "Power Supply", "UPS", "UPS Batteries", "Motherboard", "Desktop Accessories", "Mouse", "Keyboard", "Speakers"],
   },
   {
-    name: "Cameras",
-    icon: "📷",
-    children: ["Cameras", "Camera Lens", "Camera Cable", "Memory Card", "Tripod", "Camera Battery", "Camera Bag"],
+    name: "Laptop",
+    icon: "💻",
+    children: ["HP / Dell Laptops", "Laptop", "Laptop RAM", "Laptop SSD", "Laptop Charger", "Laptop Battery", "Laptop Accessories"],
   },
   {
-    name: "CCTV Cameras",
-    icon: "📹",
-    children: ["CCTV Cameras", "DVR", "NVR", "CCTV Cable", "CCTV Adapter", "Hard Disk", "Camera Connector", "CCTV Power Supply"],
+    name: "Networking",
+    icon: "🌐",
+    children: ["Cables", "Desktop Switch", "Router", "USB Wi-Fi Adapter", "Rack & Accessories", "Tools", "PoE Switch", "Fiber Switch", "Fiber Accessories", "Fiber Router", "Fiber Media Converter", "Fiber Patch Cord", "Fiber Module", "Access Point", "Range Extender"],
   },
   {
     name: "Printers",
     icon: "🖨️",
-    children: ["All Printers", "Color Printers", "Laser Printers", "Ink Cartridges", "Toner", "Printer Cable", "Printer Parts"],
+    children: ["Printer", "Scanner", "Ink Cartridge", "Toner Powder", "Toner / DMP Cartridge", "Ink Bottle", "Barcode Scanner"],
   },
   {
-    name: "Monitors",
+    name: "Security",
+    icon: "🛡️",
+    children: ["HD Camera", "HD DVR", "IP Camera", "IP NVR", "Biometrics", "Wi-Fi Camera", "Camera Accessories"],
+  },
+  {
+    name: "Software",
+    icon: "💿",
+    children: ["Antivirus", "Windows", "Office", "Busy", "Accounting Software", "Utility Software"],
+  },
+  {
+    name: "Storage",
+    icon: "💾",
+    children: ["Internal SSD", "External SSD", "External Hard Disk", "Pen Drive", "SD / Micro SD Card", "Computer Hard Disk", "Surveillance Hard Disk"],
+  },
+  {
+    name: "Display",
     icon: "🖥️",
-    children: ["Monitors", "HDMI Cable", "Display Cable", "Monitor Stand"],
+    children: ["LED / Monitor", "Presenter", "Pointer", "Wall Mount Kit", "HDMI Cable", "Display Cable", "Monitor Stand"],
   },
   {
-    name: "Audio & Accessories",
-    icon: "🎧",
-    children: ["Headphones", "Speakers", "Webcams", "USB Hub", "Power Adapter", "Other Accessories"],
+    name: "Telecom",
+    icon: "☎️",
+    children: ["Telephone", "EPBX", "Telephone Cable", "Connectors", "Intercom", "Telecom Accessories"],
+  },
+  {
+    name: "Accessories",
+    icon: "🔌",
+    children: ["Keyboard", "Mouse", "Speakers", "Headphones", "Webcam", "USB Hub", "Power Adapter", "Cables", "Other Accessories"],
   },
 ];
 

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../data/api";
 import { categoryOptions } from "../data/categories";
+import { readCollection, writeCollection } from "../data/database";
 
 const blankProduct = { name: "", productCode: "", category: "", price: "", oldPrice: "", rating: "4.5", stock: "25", image: "", imagesText: "", description: "", seoKeywords: "" };
 const money = (value) => `₹${Number(value || 0).toLocaleString("en-IN")}`;
@@ -29,7 +30,13 @@ function AdminPanel({ products, setProducts, orders, setOrders, reviews, onSaveR
   const [seenOrderIds, setSeenOrderIds] = useState(() => JSON.parse(localStorage.getItem("supermart-admin-seen-orders") || "[]"));
   const [seenContactIds, setSeenContactIds] = useState(() => JSON.parse(localStorage.getItem("supermart-admin-seen-contacts") || "[]"));
   const [seenReviewIds, setSeenReviewIds] = useState(() => JSON.parse(localStorage.getItem("supermart-admin-seen-reviews") || "[]"));
+  const [customCategories, setCustomCategories] = useState(() => readCollection("admin-product-categories", []));
   const editorRef = useRef(null);
+
+  const allCategoryOptions = [...new Set([...categoryOptions, ...customCategories])];
+  const uniqueOrders = useMemo(() => [...new Map(orders.map((order) => [String(order.id), order])).values()], [orders]);
+
+  useEffect(() => writeCollection("admin-product-categories", customCategories), [customCategories]);
 
   useEffect(() => {
     refreshOrders();
@@ -37,20 +44,20 @@ function AdminPanel({ products, setProducts, orders, setOrders, reviews, onSaveR
     return () => window.clearInterval(refreshTimer);
   }, [refreshOrders]);
 
-  const revenue = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);
-  const newOrderCount = orders.filter((order) => !seenOrderIds.includes(order.id)).length;
+  const revenue = uniqueOrders.reduce((sum, order) => sum + Number(order.total || 0), 0);
+  const newOrderCount = uniqueOrders.filter((order) => !seenOrderIds.includes(order.id)).length;
   const newContactCount = contactEvents.filter((event) => !seenContactIds.includes(event.id)).length;
   const newReviewCount = reviews.filter((review) => !seenReviewIds.includes(review.id)).length;
   const customers = useMemo(() => {
     const customerMap = new Map();
-    orders.forEach((order) => {
+    uniqueOrders.forEach((order) => {
       const customer = order.customer || {};
       const key = customer.email || customer.phone || order.id;
       const existing = customerMap.get(key);
       customerMap.set(key, { ...customer, orders: (existing?.orders || 0) + 1, spent: (existing?.spent || 0) + Number(order.total || 0), lastOrder: order.createdAt });
     });
     return [...customerMap.values()];
-  }, [orders]);
+  }, [uniqueOrders]);
 
   const saveProduct = async (event) => {
     event.preventDefault();
@@ -170,7 +177,7 @@ function AdminPanel({ products, setProducts, orders, setOrders, reviews, onSaveR
 
   const stats = [
     ["Products", products.length, "▦"],
-    ["Orders", orders.length, "⌁"],
+    ["Orders", uniqueOrders.length, "⌁"],
     ["Customers", customers.length, "♙"],
     ["Contacts", contactEvents.length, "☎"],
   ];
@@ -186,15 +193,15 @@ function AdminPanel({ products, setProducts, orders, setOrders, reviews, onSaveR
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{stats.map(([label, value, icon]) => <div key={label} className="stat-card"><span className="stat-icon">{icon}</span><p className="mt-4 text-sm font-semibold text-slate-500">{label}</p><p className="mt-1 text-2xl font-black text-slate-950">{value}</p></div>)}</div>
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[220px_1fr]">
-          <nav className="surface h-fit p-3">{[["overview", "▥ Overview"], ["orders", "⌁ Orders", newOrderCount], ["customers", "♙ Customers"], ["contacts", "☎ Contact activity", newContactCount], ["reviews", "★ Reviews", newReviewCount], ["products", "▦ Products"]].map(([id, label, count]) => <button key={id} onClick={() => id === "orders" ? openOrders() : id === "contacts" ? openContacts() : id === "reviews" ? openReviews() : setTab(id)} className={`admin-tab relative flex items-center justify-between ${tab === id ? "active" : ""} ${count > 0 ? "admin-tab-unread" : ""}`}><span>{label}</span>{count > 0 && <span className="nav-badge !right-2 !top-1 bg-rose-500">{count > 9 ? "9+" : count}</span>}</button>)}</nav>
+          <nav className="surface h-fit p-3">{[["overview", "▥ Overview"], ["orders", "⌁ Orders", newOrderCount], ["customers", "♙ Customers"], ["contacts", "☎ Contact activity", newContactCount], ["reviews", "★ Reviews", newReviewCount], ["products", "▦ Products"]].map(([id, label, count]) => <button key={id} onClick={() => id === "orders" ? openOrders() : id === "contacts" ? openContacts() : id === "reviews" ? openReviews() : setTab(id)} className={`admin-tab relative flex items-center justify-between ${tab === id ? "active" : ""} ${count > 0 ? "admin-tab-unread" : ""}`}><span>{label}</span>{count > 0 && <span className="nav-badge right-2! top-1! bg-rose-500">{count > 9 ? "9+" : count}</span>}</button>)}</nav>
           <section className="min-w-0">
             {notice && <div className="mb-4 flex items-center justify-between rounded-xl bg-emerald-50 px-4 py-3 text-sm font-bold text-emerald-700"><span>{notice}</span><button onClick={() => setNotice("")} aria-label="Dismiss">×</button></div>}
-            {tab === "overview" && <Overview orders={orders} customers={customers} revenue={revenue} onOrders={openOrders} />}
-            {tab === "orders" && <Orders orders={orders} products={products} busyAction={busyAction} onStatus={updateOrder} onSelect={setSelectedOrder} onExport={exportOrders} />}
+            {tab === "overview" && <Overview orders={uniqueOrders} customers={customers} revenue={revenue} onOrders={openOrders} />}
+            {tab === "orders" && <Orders orders={uniqueOrders} products={products} busyAction={busyAction} onStatus={updateOrder} onSelect={setSelectedOrder} onExport={exportOrders} />}
             {tab === "customers" && <Customers customers={customers} />}
             {tab === "contacts" && <ContactEvents events={contactEvents} />}
             {tab === "reviews" && <Reviews reviews={reviews} products={products} onSaveReview={onSaveReview} onDeleteReview={onDeleteReview} />}
-            {tab === "products" && <Products products={products} form={productForm} setForm={setProductForm} editingId={editingId} busyAction={busyAction} editorRef={editorRef} onSubmit={saveProduct} onEdit={editProduct} onDelete={deleteProduct} onNew={startNewProduct} onCancel={() => { setEditingId(null); setProductForm(blankProduct); }} />}
+            {tab === "products" && <Products products={products} form={productForm} setForm={setProductForm} editingId={editingId} busyAction={busyAction} editorRef={editorRef} onSubmit={saveProduct} onEdit={editProduct} onDelete={deleteProduct} onNew={startNewProduct} onCancel={() => { setEditingId(null); setProductForm(blankProduct); }} categoryOptions={allCategoryOptions} customCategories={customCategories} onAddCategory={(category) => setCustomCategories((current) => current.includes(category) ? current : [...current, category])} onDeleteCategory={(category) => setCustomCategories((current) => current.filter((item) => item !== category))} />}
           </section>
         </div>
       </div>
@@ -246,9 +253,10 @@ function Reviews({ reviews = [], products, onSaveReview, onDeleteReview }) {
   return <div className="surface p-6"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="eyebrow">Customer feedback</p><h2 className="mt-2 text-xl font-black text-slate-950">Manage reviews</h2><p className="mt-1 text-sm text-slate-500">Add, edit or remove product and shop reviews.</p></div><span className="status-pill">{reviews.length} total</span></div><form onSubmit={saveReview} className="review-form mt-6 rounded-2xl bg-slate-50 p-4"><div className="grid gap-3 sm:grid-cols-2"><select value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value, productId: "" })} className="field"><option value="shop">Shop review</option><option value="product">Product review</option></select>{form.type === "product" ? <select required value={form.productId} onChange={(event) => setForm({ ...form, productId: event.target.value })} className="field"><option value="">Select product</option>{products.map((product) => <option key={product.id} value={product.id}>{product.name}</option>)}</select> : <div />}</div><div className="mt-3 grid gap-3 sm:grid-cols-[1fr_2fr]"><select value={form.rating} onChange={(event) => setForm({ ...form, rating: event.target.value })} className="field"><option value="5">5 stars</option><option value="4">4 stars</option><option value="3">3 stars</option><option value="2">2 stars</option><option value="1">1 star</option></select><input value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} className="field" placeholder="Reviewer name" /></div><textarea required value={form.text} onChange={(event) => setForm({ ...form, text: event.target.value })} className="field mt-3 min-h-24" placeholder="Review text" /><div className="mt-3 flex gap-2"><button className="button-primary">{editingId ? "Update review" : "Add review"}</button>{editingId && <button type="button" onClick={() => { setEditingId(null); setForm(blankReview); }} className="button-secondary">Cancel</button>}</div></form>{reviews.length ? <div className="mt-6 space-y-3">{reviews.map((review) => <article key={review.id} className="review-card rounded-xl border border-slate-200 p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="font-black text-slate-900">{review.name} · <span className="text-amber-500">{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</span></p><p className="mt-1 text-xs font-bold text-blue-600">{review.type === "shop" || !review.productId ? "Super Mart shop review" : productName(review.productId)}</p></div><div className="flex gap-3"><button onClick={() => editReview(review)} className="font-bold text-blue-600">Edit</button><button onClick={async () => { await onDeleteReview(review.id); }} className="font-bold text-rose-600">Delete</button></div></div><p className="mt-3 text-sm text-slate-600">{review.text}</p></article>)}</div> : <p className="mt-6 rounded-xl bg-slate-50 p-6 text-center text-sm text-slate-500">No reviews yet.</p>}</div>;
 }
 
-function Products({ products, form, setForm, editingId, busyAction, editorRef, onSubmit, onEdit, onDelete, onNew, onCancel }) {
+function Products({ products, form, setForm, editingId, busyAction, editorRef, onSubmit, onEdit, onDelete, onNew, onCancel, categoryOptions, customCategories, onAddCategory, onDeleteCategory }) {
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
+  const [newCategory, setNewCategory] = useState("");
   const fields = [["name", "Product name"], ["productCode", "Product code / SKU"], ["category", "Category"], ["price", "Price"], ["oldPrice", "Old price"], ["rating", "Rating"], ["stock", "Stock"], ["image", "Main image URL"]];
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const visibleProducts = products.filter((product) => {
@@ -256,6 +264,13 @@ function Products({ products, form, setForm, editingId, busyAction, editorRef, o
     const matchesSearch = !normalizedSearch || [product.name, product.productCode, product.code, product.category].some((value) => String(value || "").toLowerCase().includes(normalizedSearch));
     return matchesCategory && matchesSearch;
   });
+  const addCategory = (event) => {
+    event.preventDefault();
+    const category = newCategory.trim();
+    if (!category) return;
+    onAddCategory(category);
+    setNewCategory("");
+  };
 
   return (
     <div className="space-y-6">
@@ -263,6 +278,7 @@ function Products({ products, form, setForm, editingId, busyAction, editorRef, o
         <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="eyebrow">Catalog and inventory</p><h2 className="mt-2 text-xl font-black text-slate-950">Products by category</h2></div><div className="flex w-full flex-wrap gap-2 sm:w-auto"><input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} className="field min-w-56 flex-1 py-2 sm:w-64" placeholder="Search name or product code..." aria-label="Search products by name or product code" /><select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)} className="field w-auto py-2"><option>All</option>{categoryOptions.map((category) => <option key={category}>{category}</option>)}</select><button type="button" onClick={onNew} className="admin-action button-primary">+ New product</button></div></div>
         <div className="mt-5 overflow-x-auto"><table className="admin-table"><thead><tr><th>Product</th><th>Code</th><th>Category</th><th>Stock</th><th>Price</th><th>Action</th></tr></thead><tbody>{visibleProducts.map((product) => <tr key={product.id}><td><div className="flex min-w-52 items-center gap-3"><img src={product.image} alt="" className="size-11 rounded-lg object-cover" /><span className="font-bold text-slate-900">{product.name}</span></div></td><td className="font-mono text-xs font-bold text-blue-700">{product.productCode || product.code || "—"}</td><td>{product.category}</td><td className={product.stock < 10 ? "font-black text-rose-600" : ""}>{product.stock ?? "—"}</td><td>{money(product.price)}</td><td><button type="button" onClick={() => onEdit(product)} disabled={Boolean(busyAction)} className="admin-action font-bold text-blue-600 disabled:opacity-50">✎ Edit</button><button type="button" onClick={() => onDelete(product.id)} disabled={Boolean(busyAction)} className="admin-action ml-4 font-bold text-rose-600 disabled:opacity-50">{busyAction === `delete-${product.id}` ? "Deleting..." : "♲ Delete"}</button></td></tr>)}</tbody></table></div>
         {!visibleProducts.length && <p className="mt-5 rounded-xl bg-slate-50 p-6 text-center text-sm text-slate-500">No products match your search.</p>}
+        <div className="mt-6 rounded-xl border border-blue-100 bg-blue-50/60 p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm font-black text-slate-900">Product categories</p><p className="mt-1 text-xs text-slate-500">Add categories for future products.</p></div><form onSubmit={addCategory} className="flex w-full gap-2 sm:w-auto"><input value={newCategory} onChange={(event) => setNewCategory(event.target.value)} className="field min-w-0 flex-1 bg-white py-2 sm:w-56" placeholder="New category name" aria-label="New product category" /><button type="submit" className="button-primary whitespace-nowrap py-2">Add category</button></form></div>{customCategories.length > 0 && <div className="mt-3 flex flex-wrap gap-2">{customCategories.map((category) => <span key={category} className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1 text-xs font-bold text-blue-700 shadow-sm">{category}<button type="button" onClick={() => { onDeleteCategory(category); if (categoryFilter === category) setCategoryFilter("All"); }} className="text-blue-400 hover:text-rose-500" aria-label={`Delete ${category} category`}>×</button></span>)}</div>}</div>
       </div>
       {editingId !== null && <form ref={editorRef} onSubmit={onSubmit} className="surface admin-editor p-6"><h2 className="text-xl font-black text-slate-950">{editingId === "new" ? "Add product" : "Edit product"}</h2><div className="mt-5 grid gap-4 sm:grid-cols-2">{fields.map(([key, label]) => <label key={key} className="field-label">{label}{key === "category" ? <select required value={form[key] ?? ""} onChange={(event) => setForm({ ...form, category: event.target.value })} className="field"><option value="">Select category</option>{categoryOptions.map((category) => <option key={category}>{category}</option>)}</select> : <input required={key !== "oldPrice"} value={form[key] ?? ""} onChange={(event) => setForm({ ...form, [key]: event.target.value })} className="field" />}</label>)}<div className="field-label sm:col-span-2"><span>Main image preview</span>{form.image ? <div className="image-preview"><img src={form.image} alt="Product preview" onError={(event) => { event.currentTarget.style.display = "none"; event.currentTarget.nextElementSibling.hidden = false; }} /><span hidden>Image URL could not be loaded.</span></div> : <div className="image-preview image-preview-empty">Paste a main image URL above to preview it.</div>}</div><label className="field-label sm:col-span-2">SEO keywords<textarea value={form.seoKeywords ?? ""} onChange={(event) => setForm({ ...form, seoKeywords: event.target.value })} className="field min-h-24" placeholder="Leave blank for automatic keywords: Super Mart Bhiwadi, best laptop in Bhiwadi..." /></label><label className="field-label sm:col-span-2">Additional image URLs<textarea value={form.imagesText ?? ""} onChange={(event) => setForm({ ...form, imagesText: event.target.value })} className="field min-h-28" placeholder="One image URL per line (up to 4)" /></label><label className="field-label sm:col-span-2">Description<textarea required value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} className="field min-h-24" /></label></div><div className="mt-6 flex gap-3"><button disabled={Boolean(busyAction)} className="admin-action button-primary disabled:cursor-wait disabled:opacity-60">{busyAction === "save" ? "Saving..." : editingId === "new" ? "Add product" : "Save changes"}</button><button type="button" onClick={onCancel} disabled={Boolean(busyAction)} className="admin-action button-secondary disabled:opacity-60">Cancel</button></div></form>}
     </div>
