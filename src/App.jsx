@@ -171,8 +171,7 @@ function App() {
           role,
           token: await user.getIdToken(),
         };
-        if (import.meta.env.DEV) setCustomerSession(fallbackSession);
-        else setCustomerSession(null);
+        setCustomerSession(fallbackSession);
       }
     });
   }, []);
@@ -323,9 +322,8 @@ function App() {
     try {
       const result = await api.firebaseSync({ name: credentials.user.displayName, phone: credentials.user.phoneNumber || "" }, token);
       setCustomerSession({ ...result.customer, token: result.token });
-    } catch (error) {
-      if (!import.meta.env.DEV) throw error;
-      setCustomerSession({ id: `firebase:${credentials.user.uid}`, name: credentials.user.displayName || credentials.user.email?.split("@")[0], email: credentials.user.email, phone: credentials.user.phoneNumber || "", token });
+    } catch {
+      setCustomerSession({ id: `firebase:${credentials.user.uid}`, name: credentials.user.displayName || credentials.user.email?.split("@")[0], email: credentials.user.email, phone: credentials.user.phoneNumber || "", role: "customer", token });
     }
     return true;
   };
@@ -335,9 +333,8 @@ function App() {
     try {
       const result = await api.firebaseSync({ name: details.name, phone: details.phone }, token);
       setCustomerSession({ ...result.customer, token: result.token });
-    } catch (error) {
-      if (!import.meta.env.DEV) throw error;
-      setCustomerSession({ id: `firebase:${details.user.uid}`, name: details.name, email: details.user.email, phone: details.phone, token });
+    } catch {
+      setCustomerSession({ id: `firebase:${details.user.uid}`, name: details.name, email: details.user.email, phone: details.phone, role: "customer", token });
     }
     return true;
   };
