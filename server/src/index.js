@@ -67,7 +67,29 @@ const razorpay = process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET
   ? new Razorpay({ key_id: process.env.RAZORPAY_KEY_ID, key_secret: process.env.RAZORPAY_KEY_SECRET })
   : null;
 
-app.use(cors({ origin: process.env.CLIENT_ORIGIN?.split(",").map((value) => value.trim()) || "http://localhost:5173" }));
+const configuredOrigins = (process.env.CLIENT_ORIGIN || "").split(",").map((s) => s.trim()).filter(Boolean);
+const defaultOrigins = [
+  "https://supermartbhiwadi.com",
+  "https://www.supermartbhiwadi.com",
+  "https://supermartbhiwadi.vercel.app",
+  "https://supermart.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:4000",
+  "http://localhost:3000",
+];
+const allowedOrigins = new Set([...configuredOrigins, ...defaultOrigins]);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.has(origin) || origin.endsWith("supermartbhiwadi.com") || origin.endsWith(".vercel.app")) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
+    credentials: true,
+  })
+);
 app.use(express.json({ limit: "1mb" }));
 
 class HttpError extends Error {
