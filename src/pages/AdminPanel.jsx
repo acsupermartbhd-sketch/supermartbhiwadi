@@ -1717,6 +1717,56 @@ function ProductsManager({
 
   return (
     <div className="space-y-6">
+      {/* Custom Category Quick Manager (Moved to Top) */}
+      <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-slate-300">
+              Custom Categories
+            </p>
+            <p className="text-[11px] text-slate-500">
+              Add special categories for new product collections.
+            </p>
+          </div>
+
+          <form onSubmit={handleAddCategorySubmit} className="flex gap-2">
+            <input
+              type="text"
+              value={newCatInput}
+              onChange={(e) => setNewCatInput(e.target.value)}
+              placeholder="Category name..."
+              className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+            />
+            <button
+              type="submit"
+              className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition cursor-pointer"
+            >
+              + Add
+            </button>
+          </form>
+        </div>
+
+        {customCategories.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {customCategories.map((cat) => (
+              <span
+                key={cat}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300"
+              >
+                <span>{cat}</span>
+                <button
+                  type="button"
+                  onClick={() => onDeleteCategory(cat)}
+                  className="text-slate-500 hover:text-rose-400 p-0.5"
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
       {/* Product Catalog Table Section */}
       <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -1728,14 +1778,6 @@ function ProductsManager({
               Control retail and B2B wholesale prices, SKU stock, and product details.
             </p>
           </div>
-
-          <button
-            onClick={onNew}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold bg-blue-600 hover:bg-blue-500 text-white transition shadow-sm cursor-pointer self-start sm:self-auto"
-          >
-            <FiPlus className="size-4" />
-            <span>Add Product</span>
-          </button>
         </div>
 
         {/* Search & Category Filter */}
@@ -1869,54 +1911,18 @@ function ProductsManager({
           <EmptyState text="No products found matching your search." />
         )}
 
-        {/* Custom Category Quick Manager */}
-        <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-slate-300">
-                Custom Categories
-              </p>
-              <p className="text-[11px] text-slate-500">
-                Add special categories for new product collections.
-              </p>
-            </div>
-
-            <form onSubmit={handleAddCategorySubmit} className="flex gap-2">
-              <input
-                type="text"
-                value={newCatInput}
-                onChange={(e) => setNewCatInput(e.target.value)}
-                placeholder="Category name..."
-                className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
-              />
-              <button
-                type="submit"
-                className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition cursor-pointer"
-              >
-                + Add
-              </button>
-            </form>
-          </div>
-
-          {customCategories.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 pt-1">
-              {customCategories.map((cat) => (
-                <span
-                  key={cat}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-xs font-semibold text-slate-300"
-                >
-                  <span>{cat}</span>
-                  <button
-                    type="button"
-                    onClick={() => onDeleteCategory(cat)}
-                    className="text-slate-500 hover:text-rose-400 p-0.5"
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
+        {/* Add Product Button (Moved to Bottom of Product Section) */}
+        <div className="flex items-center justify-between pt-4 border-t border-slate-800/80">
+          <p className="text-xs text-slate-400">
+            Total items in list: <strong className="text-white">{filteredProducts.length}</strong>
+          </p>
+          <button
+            onClick={onNew}
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold bg-blue-600 hover:bg-blue-500 text-white transition shadow-lg shadow-blue-600/20 cursor-pointer"
+          >
+            <FiPlus className="size-4" />
+            <span>+ Add New Product</span>
+          </button>
         </div>
       </div>
 
