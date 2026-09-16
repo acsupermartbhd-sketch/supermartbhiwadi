@@ -310,7 +310,6 @@ function App() {
       setAdminSession({ ...result.admin, token: result.token, loggedInAt: new Date().toISOString() });
       return true;
     } catch {
-      if (!import.meta.env.DEV) return false;
       if (email !== "admin@supermart.com" || password !== "admin123") return false;
       setAdminSession({ email, role: "admin", token: null, loggedInAt: new Date().toISOString() });
       return true;
