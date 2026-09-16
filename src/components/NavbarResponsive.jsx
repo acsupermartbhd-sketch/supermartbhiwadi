@@ -5,7 +5,7 @@ import categories from "../data/categories";
 import { firebaseAuth } from "../data/firebase";
 import { FaLocationDot } from "react-icons/fa6";
 
-function NavbarResponsive({ customerSession, onLogout, cartCount = 0, wishlistCount = 0, onContactClick, onWhatsAppClick }) {
+function NavbarResponsive({ customerSession, onLogout, cartCount = 0, wishlistCount = 0, onContactClick, onWhatsAppClick, onEditProfile }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [navCategories, setNavCategories] = useState(categories);
@@ -102,7 +102,7 @@ function NavbarResponsive({ customerSession, onLogout, cartCount = 0, wishlistCo
             <Link to="/cart" onClick={closeMenu} className="nav-icon" aria-label={`Cart${cartCount ? `, ${cartCount} items` : ""}`}>
               <span aria-hidden="true">🛒</span>{cartCount > 0 && <b className="nav-badge bg-blue-600">{cartCount}</b>}
             </Link>
-            <AuthActions closeMenu compact customerSession={customerSession} onLogout={onLogout} profileOpen={profileOpen} setProfileOpen={setProfileOpen} />
+            <AuthActions closeMenu={closeMenu} compact customerSession={customerSession} onLogout={onLogout} profileOpen={profileOpen} setProfileOpen={setProfileOpen} onEditProfile={onEditProfile} />
             <button type="button" onClick={() => setMenuOpen((open) => !open)} className="menu-toggle ml-1 flex size-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-800 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 md:hidden" aria-label={menuOpen ? "Close menu" : "Open menu"} aria-expanded={menuOpen}>
               <span className={`menu-toggle-lines ${menuOpen ? "is-open" : ""}`} aria-hidden="true"><i /><i /><i /></span>
             </button>
@@ -141,9 +141,77 @@ function NavbarResponsive({ customerSession, onLogout, cartCount = 0, wishlistCo
   );
 }
 
-function AuthActions({ closeMenu, mobile = false, compact = false, customerSession, onLogout, profileOpen, setProfileOpen }) {
-  if (customerSession) return <div className="profile-menu-wrap"><button type="button" onClick={() => setProfileOpen((open) => !open)} className="profile-action" aria-label="Open profile menu" aria-expanded={profileOpen}><span className="profile-avatar">{customerSession.name?.charAt(0)?.toUpperCase() || "U"}</span></button>{profileOpen && <div className="profile-menu"><p className="profile-menu-name">{customerSession.name || "Customer"}</p><p className="profile-menu-email">{customerSession.email}</p>{customerSession.phone && <p className="profile-menu-detail">☎ {customerSession.phone}</p>}{customerSession.address && <p className="profile-menu-detail">⌖ {customerSession.address}</p>}<Link to="/orders" onClick={() => { setProfileOpen(false); closeMenu(); }} className="profile-orders-link">View my orders</Link><button type="button" onClick={async () => { await signOut(firebaseAuth); setProfileOpen(false); onLogout(); closeMenu(); }} className="profile-logout">Log out</button></div>}</div>;
-  return <div className={`auth-actions ${mobile ? "auth-actions-mobile" : ""} ${compact ? "auth-actions-compact" : ""}`}><Link to="/login?mode=login" onClick={closeMenu} className="auth-login-button"><span className="auth-person-icon" aria-hidden="true" /> Login</Link></div>;
+function AuthActions({ closeMenu, mobile = false, compact = false, customerSession, onLogout, profileOpen, setProfileOpen, onEditProfile }) {
+  const isPartner = customerSession?.role === "partner";
+
+  if (customerSession) return (
+    <div className="profile-menu-wrap">
+      {/* Avatar button – golden ring for partners */}
+      <button
+        type="button"
+        onClick={() => setProfileOpen((open) => !open)}
+        className={`profile-action${isPartner ? " is-partner" : ""}`}
+        aria-label="Open profile menu"
+        aria-expanded={profileOpen}
+        title={isPartner ? "★ B2B Partner Account" : customerSession.name || "My Account"}
+      >
+        <span className="profile-avatar">
+          {customerSession.name?.charAt(0)?.toUpperCase() || "U"}
+        </span>
+      </button>
+
+      {/* Partner badge pill shown next to avatar */}
+      {isPartner && (
+        <span className="partner-badge" aria-label="B2B Partner">
+          ★ Partner
+        </span>
+      )}
+
+      {/* Dropdown menu */}
+      {profileOpen && (
+        <div className="profile-menu">
+          <p className="profile-menu-name">{customerSession.name || "Customer"}</p>
+          <p className="profile-menu-email">{customerSession.email}</p>
+          {customerSession.phone && <p className="profile-menu-detail">☎ {customerSession.phone}</p>}
+          {customerSession.address && <p className="profile-menu-detail">⌖ {customerSession.address}</p>}
+
+          {/* Partner exclusive card in dropdown */}
+          {isPartner && (
+            <div className="profile-partner-card">
+              <p className="profile-partner-card-title">★ B2B Wholesale Partner</p>
+              <p className="profile-partner-card-desc">You enjoy exclusive wholesale pricing across all products.</p>
+            </div>
+          )}
+
+          <Link to="/orders" onClick={() => { setProfileOpen(false); closeMenu(); }} className="profile-orders-link">
+            View my orders
+          </Link>
+          <button
+            type="button"
+            onClick={() => { setProfileOpen(false); closeMenu(); onEditProfile?.(); }}
+            className="w-full mt-1 px-3 py-2 rounded-xl text-xs font-bold text-left text-blue-700 bg-blue-50 hover:bg-blue-100 transition flex items-center gap-2"
+          >
+            ✏️ Edit Profile &amp; Address
+          </button>
+          <button
+            type="button"
+            onClick={async () => { await signOut(firebaseAuth); setProfileOpen(false); onLogout(); closeMenu(); }}
+            className="profile-logout"
+          >
+            Log out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className={`auth-actions ${mobile ? "auth-actions-mobile" : ""} ${compact ? "auth-actions-compact" : ""}`}>
+      <Link to="/login?mode=login" onClick={closeMenu} className="auth-login-button">
+        <span className="auth-person-icon" aria-hidden="true" /> Login
+      </Link>
+    </div>
+  );
 }
 
 export default NavbarResponsive;

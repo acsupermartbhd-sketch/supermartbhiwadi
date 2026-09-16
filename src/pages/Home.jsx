@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import ProductCard from "./ProductCard";
 
-function Home({ products, addToCart, addToWishlist, reviews = [] }) {
+function Home({ products, addToCart, addToWishlist, reviews = [], customerSession }) {
   const [activeSlide, setActiveSlide] = useState(0);
   const [reviewDirection, setReviewDirection] = useState("down");
   const featuredProducts = products.slice(0, 6);
@@ -12,7 +12,7 @@ function Home({ products, addToCart, addToWishlist, reviews = [] }) {
     headline: index === 0 ? "Power up your everyday" : index === 1 ? "Tech that keeps up" : "Big upgrades, better value",
   }));
   const storefrontImages = ["/image/main.webp", "/image/main2.webp", "/image/main3.webp", "/image/main4.webp", "/image/main5.webp", "/image/main6.webp"];
-  const heroSlides = [...storefrontImages.map((image, index) => ({ ...slides[0], isStorefront: true, image, headline: index === 0 ? "Your trusted Super Mart in Bhiwadi" : "Explore Super Mart in person" })), ...slides.map((slide) => ({ ...slide, image: slide.product.image }))].filter((slide) => slide.product);
+  const heroSlides = [...storefrontImages.map((image, index) => ({ id: `storefront-${index}`, isStorefront: true, image, headline: index === 0 ? "Your trusted Super Mart in Bhiwadi" : "Explore Super Mart in person" })), ...slides.map((slide) => ({ ...slide, id: slide.product.id, image: slide.product.image }))];
   const visibleSlide = activeSlide < heroSlides.length ? activeSlide : 0;
   const shopReviews = reviews.filter((review) => review.type === "shop");
   const topReviews = shopReviews.filter((_review, index) => index % 2 === 0);
@@ -81,7 +81,7 @@ function Home({ products, addToCart, addToWishlist, reviews = [] }) {
       {/* Hero slider */}
       <section className="home-hero">
         <div className="mx-auto grid max-w-7xl items-center gap-8 px-4 py-5 sm:px-6 sm:py-8 lg:py-10">
-          <div className="relative z-10 flex min-h-[360px] flex-col items-start justify-center rounded-3xl p-6 text-white sm:min-h-[480px] sm:p-10 lg:min-h-[540px] lg:p-14">
+          <div className="relative z-10 flex min-h-90 flex-col items-start justify-center rounded-3xl p-6 text-white sm:min-h-120 sm:p-10 lg:min-h-135 lg:p-14">
             <p className="mb-4 text-xs font-black uppercase tracking-[.18em] text-blue-200">Welcome to SuperMart · Bhiwadi</p>
             <h1 className="max-w-xl text-4xl font-black leading-[1.05] tracking-[-.04em] sm:text-5xl lg:text-6xl">{heroSlides[visibleSlide]?.isStorefront ? "Your trusted Super Mart in Bhiwadi" : heroSlides[visibleSlide]?.headline || "Upgrade your digital life"}</h1>
             <p className="mt-5 max-w-lg text-base leading-7 text-blue-100 sm:text-lg">Reliable laptops, printers, CCTV cameras and accessories with honest prices and quick local delivery.</p>
@@ -90,7 +90,7 @@ function Home({ products, addToCart, addToWishlist, reviews = [] }) {
               {heroSlides[visibleSlide] && !heroSlides[visibleSlide].isStorefront && <Link to={`/product/${heroSlides[visibleSlide].product.id}`} className="rounded-xl border border-blue-300/70 px-5 py-3 text-sm font-black text-white transition hover:bg-white hover:text-blue-700">View this pick</Link>}
             </div>
             <div className="mt-8 flex items-center gap-2" aria-label="Hero slides">
-              {heroSlides.map((slide, index) => <button key={`${slide.product.id}-${index}`} type="button" onClick={() => setActiveSlide(index)} aria-label={`Show slide ${index + 1}`} className={`h-2 rounded-full transition-all ${visibleSlide === index ? "w-9 bg-white" : "w-2 bg-blue-300"}`} />)}
+              {heroSlides.map((slide, index) => <button key={`${slide.id}-${index}`} type="button" onClick={() => setActiveSlide(index)} aria-label={`Show slide ${index + 1}`} className={`h-2 rounded-full transition-all ${visibleSlide === index ? "w-9 bg-white" : "w-2 bg-blue-300"}`} />)}
             </div>
           </div>
           {heroSlides[visibleSlide] && <div className="absolute inset-0 overflow-hidden rounded-3xl border border-white/20 bg-slate-950/30 shadow-2xl">
@@ -162,6 +162,7 @@ function Home({ products, addToCart, addToWishlist, reviews = [] }) {
                 product={product}
                 addToCart={addToCart}
                 addToWishlist={addToWishlist}
+                customerSession={customerSession}
               />
             ))}
           </div>

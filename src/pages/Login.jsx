@@ -20,6 +20,11 @@ function Login({ onLogin, onSignup }) {
     "auth/weak-password": "Password must be at least 6 characters.",
     "auth/operation-not-allowed": "Email/password sign up is not enabled in Firebase Console.",
     "auth/configuration-not-found": "Firebase Authentication is not configured. Enable Email/Password in Firebase Console > Authentication > Sign-in method, then add this website domain under Settings > Authorized domains.",
+    "auth/admin-restricted-operation": "Email/password sign-in is disabled. Enable Email/Password in Firebase Console > Authentication > Sign-in method.",
+    "auth/invalid-api-key": "Firebase API key is invalid. Check the new project configuration in the frontend .env file.",
+    "auth/app-not-authorized": "This website is not authorized for the Firebase project. Add its domain in Authentication > Settings > Authorized domains.",
+    "auth/too-many-requests": "Too many login attempts. Wait a few minutes and try again.",
+    "auth/user-disabled": "This account has been disabled in Firebase Authentication.",
     "auth/network-request-failed": "Network error. Check your internet connection and try again.",
     "auth/user-not-found": "No account was found for this email.",
   }[authError.code] || authError.message || "Unable to create your account.");

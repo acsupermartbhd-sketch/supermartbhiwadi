@@ -1,8 +1,9 @@
-const databasePrefix = "supermart-db";
+const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID || "local";
+const databasePrefix = `supermart-db:${projectId}`;
 
 export function readCollection(collection, fallback) {
   try {
-    const value = localStorage.getItem(`${databasePrefix}:${collection}`) || localStorage.getItem(`supermart-${collection}`);
+    const value = localStorage.getItem(`${databasePrefix}:${collection}`);
     return value ? JSON.parse(value) : fallback;
   } catch {
     return fallback;

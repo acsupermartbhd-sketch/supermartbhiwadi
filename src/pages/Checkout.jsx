@@ -4,22 +4,50 @@ import { api } from "../data/api";
 
 const formatPrice = (price) => `₹${price.toLocaleString("en-IN")}`;
 
-function Checkout({ cart, placeOrder, customer }) {
+function Checkout({ cart, placeOrder, customer, onProfileUpdate }) {
   const navigate = useNavigate();
   const [payment, setPayment] = useState("cod");
   const [submittedOrder, setSubmittedOrder] = useState(null);
   const [paymentError, setPaymentError] = useState("");
   const [isPaying, setIsPaying] = useState(false);
+  const [saveDetails, setSaveDetails] = useState(true);
   const [razorpayReady, setRazorpayReady] = useState(Boolean(window.Razorpay));
-  const [form, setForm] = useState({
-    name: customer?.name || "",
-    phone: customer?.phone || "",
-    email: customer?.email || "",
-    address: customer?.address || "",
-    city: customer?.city || "Bhiwadi",
-    state: customer?.state || "Rajasthan",
-    pincode: customer?.pincode || "",
+
+  // Load saved address from localStorage as fallback
+  const getSavedAddress = () => {
+    try {
+      const raw = localStorage.getItem("supermart_saved_delivery_address");
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  };
+
+  const [form, setForm] = useState(() => {
+    const saved = getSavedAddress();
+    return {
+      name: customer?.name || saved?.name || "",
+      phone: customer?.phone || saved?.phone || "",
+      email: customer?.email || "",
+      address: customer?.address || saved?.address || "",
+      city: customer?.city || saved?.city || "Bhiwadi",
+      state: customer?.state || saved?.state || "Rajasthan",
+      pincode: customer?.pincode || saved?.pincode || "",
+    };
   });
+
+  // Re-sync when customer session loads (it loads async from Firebase)
+  useEffect(() => {
+    if (!customer) return;
+    const saved = getSavedAddress();
+    setForm((prev) => ({
+      name: customer.name || prev.name || saved?.name || "",
+      phone: customer.phone || prev.phone || saved?.phone || "",
+      email: customer.email || prev.email || "",
+      address: customer.address || prev.address || saved?.address || "",
+      city: customer.city || prev.city || saved?.city || "Bhiwadi",
+      state: customer.state || prev.state || saved?.state || "Rajasthan",
+      pincode: customer.pincode || prev.pincode || saved?.pincode || "",
+    }));
+  }, [customer?.id]);
 
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const delivery = subtotal >= 999 ? 0 : 79;
@@ -42,6 +70,21 @@ function Checkout({ cart, placeOrder, customer }) {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setPaymentError("");
+
+    // Always save delivery address to localStorage for future use
+    try {
+      const addressToSave = { name: form.name, phone: form.phone, address: form.address, city: form.city, state: form.state, pincode: form.pincode };
+      localStorage.setItem("supermart_saved_delivery_address", JSON.stringify(addressToSave));
+    } catch {}
+
+    if (saveDetails && customer?.token) {
+      try {
+        const savedCustomer = await api.updateCustomerProfile(form, customer.token);
+        onProfileUpdate?.(savedCustomer);
+      } catch {
+        setPaymentError("Delivery details could not be saved. You can still place the order.");
+      }
+    }
     if (payment === "cod") {
       const order = await placeOrder({ customer: form, payment });
       setSubmittedOrder(order);
@@ -145,6 +188,7 @@ function Checkout({ cart, placeOrder, customer }) {
               <label className="field-label">State<input required value={form.state} onChange={(e) => update("state", e.target.value)} className="field" /></label>
               <label className="field-label">Pincode<input required pattern="[0-9]{6}" value={form.pincode} onChange={(e) => update("pincode", e.target.value)} className="field" placeholder="123456" /></label>
             </div>
+            {customer?.token && <label className="mt-4 flex items-center gap-2 text-sm font-bold text-slate-600"><input type="checkbox" checked={saveDetails} onChange={(event) => setSaveDetails(event.target.checked)} /> Save delivery details for next time</label>}
 
             <h2 className="mt-8 text-xl font-black text-slate-950">Payment method</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">

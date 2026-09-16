@@ -39,6 +39,11 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 3px solid
 .payment-method-logo { height: 2.25rem; width: 4.5rem; object-fit: contain; object-position: left center; }
 .admin-shell { min-height: calc(100vh - 160px); padding: 3rem 1.25rem 5rem; background: #eef3f9; }
 .stat-card { border: 1px solid #dfe7f2; border-radius: 1rem; background: #fff; padding: 1.15rem; box-shadow: 0 8px 24px rgba(24, 53, 92, .05); }
+.partner-stat-card { border-color: #f5d48a; background: linear-gradient(135deg, #fffdf5, #fff8e7); }
+.partner-panel { border-color: #f1d28c; background: linear-gradient(135deg, #fff, #fffaf0); }
+.partner-eyebrow { color: #b7791f; }
+.partner-row td { background: #fffaf0; }
+.partner-role-select { border-color: #e6b85c; background: #fff8e7; color: #9a670f; font-weight: 900; }
 .stat-icon { display: inline-flex; height: 2.35rem; width: 2.35rem; align-items: center; justify-content: center; border-radius: .7rem; background: #e7f0ff; color: #1a5bc9; font-weight: 900; }
 .admin-tab { display: block; width: 100%; border: 0; border-radius: .7rem; background: transparent; padding: .75rem .85rem; text-align: left; color: #546984; font-size: .9rem; font-weight: 800; }
 .admin-tab:hover, .admin-tab.active { background: #eaf2ff; color: #1458cf; }
@@ -78,8 +83,23 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 3px solid
 .profile-action { display: inline-flex; height: 2.6rem; width: 2.6rem; align-items: center; justify-content: center; border: 0; border-radius: 50%; background: #1458cf; color: #fff; cursor: pointer; transition: transform .2s, box-shadow .2s; }
 .profile-action:hover { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(20, 88, 207, .24); }
 .profile-avatar { font-size: .82rem; font-weight: 900; }
-.profile-menu-wrap { position: relative; }
-.profile-menu { position: absolute; right: 0; top: calc(100% + .65rem); z-index: 60; width: 16rem; border: 1px solid #dfe7f2; border-radius: 1rem; background: #fff; padding: .9rem; box-shadow: 0 18px 40px rgba(15, 39, 72, .16); animation: profile-menu-in .18s ease-out; }
+/* Partner golden ring */
+.profile-action.is-partner { background: linear-gradient(135deg, #f59e0b, #fbbf24); color: #1c1917; outline: 3px solid #f59e0b; outline-offset: 2px; box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.25), 0 0 16px rgba(245, 158, 11, 0.40); animation: partner-ring-pulse 2.2s ease-in-out infinite; }
+.profile-action.is-partner:hover { transform: translateY(-2px) scale(1.06); box-shadow: 0 0 0 5px rgba(245, 158, 11, 0.35), 0 0 24px rgba(245, 158, 11, 0.55); }
+@keyframes partner-ring-pulse { 0%, 100% { box-shadow: 0 0 0 4px rgba(245,158,11,.25), 0 0 16px rgba(245,158,11,.40); } 50% { box-shadow: 0 0 0 6px rgba(245,158,11,.40), 0 0 28px rgba(245,158,11,.60); } }
+/* Partner badge pill next to avatar */
+.partner-badge { display: inline-flex; align-items: center; gap: .2rem; border-radius: 999px; background: linear-gradient(90deg,#f59e0b,#fbbf24); padding: .18rem .5rem; color: #1c1917; font-size: .6rem; font-weight: 900; letter-spacing: .03em; white-space: nowrap; box-shadow: 0 2px 8px rgba(245,158,11,.35); animation: partner-badge-in .2s ease-out; flex-shrink: 0; max-width: 5.5rem; overflow: hidden; text-overflow: ellipsis; }
+@keyframes partner-badge-in { from { opacity: 0; transform: scale(.8) translateY(-2px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+/* On very small screens hide the text badge, keep the ring */
+@media (max-width: 360px) { .partner-badge { display: none; } }
+/* Partner card inside dropdown */
+.profile-partner-card { margin-top: .65rem; border-radius: .75rem; background: linear-gradient(135deg,#fef3c7,#fde68a); border: 1px solid #f59e0b; padding: .55rem .75rem; }
+.profile-partner-card-title { font-size: .72rem; font-weight: 900; color: #78350f; }
+.profile-partner-card-desc { font-size: .65rem; color: #92400e; margin-top: .15rem; }
+/* Partner price badge on product cards */
+.partner-price-badge { display: inline-flex; align-items: center; gap: .25rem; border-radius: .35rem; background: linear-gradient(90deg,#f59e0b,#fbbf24); padding: .1rem .45rem; font-size: .6rem; font-weight: 900; color: #1c1917; letter-spacing: .02em; }
+.profile-menu-wrap { position: relative; display: inline-flex; align-items: center; gap: .3rem; flex-shrink: 0; }
+.profile-menu { position: fixed; right: .75rem; top: 4.5rem; z-index: 200; width: min(17rem, calc(100vw - 1.5rem)); border: 1px solid #dfe7f2; border-radius: 1rem; background: #fff; padding: .9rem; box-shadow: 0 18px 40px rgba(15, 39, 72, .16); animation: profile-menu-in .18s ease-out; }
 .profile-menu-name { color: #10233f; font-size: .9rem; font-weight: 900; }
 .profile-menu-email, .profile-menu-detail { overflow: hidden; margin-top: .25rem; color: #6b7d94; font-size: .72rem; text-overflow: ellipsis; white-space: nowrap; }
 .profile-logout { width: 100%; margin-top: .8rem; border: 1px solid #fecaca; border-radius: .65rem; background: #fff5f5; padding: .55rem .7rem; color: #be123c; font-size: .75rem; font-weight: 900; transition: background .2s, transform .2s; }
@@ -330,3 +350,43 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 3px solid
   .category-dropdown { animation-name: mobile-category-in; }
 }
 @keyframes mobile-category-in { from { opacity: 0; transform: translateY(-.35rem) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+/* Pro Admin Panel Animations & Utilities */
+@keyframes toast-slide-in {
+  from { opacity: 0; transform: translateY(-12px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-toast { animation: toast-slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+@keyframes modal-zoom-in {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.animate-modal { animation: modal-zoom-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+/* Clean Invoice Print Styles */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #printable-invoice, #printable-invoice * {
+    visibility: visible !important;
+  }
+  #printable-invoice {
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 24px !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    border: none !important;
+    z-index: 999999 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

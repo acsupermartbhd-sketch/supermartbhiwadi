@@ -4,6 +4,8 @@ const products = [
     name: "HP 15s Laptop",
     category: "Laptops",
     price: 54999,
+    customerPrice: 54999,
+    partnerPrice: 48399,
     oldPrice: 64999,
     rating: 4.5,
     image:
@@ -16,6 +18,8 @@ const products = [
     name: "Dell Inspiron 15",
     category: "Laptops",
     price: 62999,
+    customerPrice: 62999,
+    partnerPrice: 55439,
     oldPrice: 72999,
     rating: 4.4,
     image:
@@ -28,6 +32,8 @@ const products = [
     name: "Canon PIXMA Printer",
     category: "Printers",
     price: 8499,
+    customerPrice: 8499,
+    partnerPrice: 7479,
     oldPrice: 9999,
     rating: 4.3,
     image:
@@ -40,6 +46,8 @@ const products = [
     name: "HP LaserJet Printer",
     category: "Printers",
     price: 14999,
+    customerPrice: 14999,
+    partnerPrice: 13199,
     oldPrice: 17999,
     rating: 4.6,
     image:
@@ -52,6 +60,8 @@ const products = [
     name: "Samsung Galaxy Smartphone",
     category: "Mobiles",
     price: 29999,
+    customerPrice: 29999,
+    partnerPrice: 26399,
     oldPrice: 34999,
     rating: 4.7,
     image:
@@ -64,6 +74,8 @@ const products = [
     name: "iPhone 15",
     category: "Mobiles",
     price: 69999,
+    customerPrice: 69999,
+    partnerPrice: 61599,
     oldPrice: 74999,
     rating: 4.8,
     image:
@@ -76,6 +88,8 @@ const products = [
     name: "Dell 24 Inch Monitor",
     category: "Monitors",
     price: 12999,
+    customerPrice: 12999,
+    partnerPrice: 11439,
     oldPrice: 15999,
     rating: 4.5,
     image:
@@ -88,6 +102,8 @@ const products = [
     name: "Wireless Headphones",
     category: "Accessories",
     price: 2499,
+    customerPrice: 2499,
+    partnerPrice: 2199,
     oldPrice: 3999,
     rating: 4.2,
     image:

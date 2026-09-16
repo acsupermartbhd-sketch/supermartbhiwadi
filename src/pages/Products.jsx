@@ -1,6 +1,6 @@
 import { useParams, useSearchParams } from "react-router-dom";
 import ProductCard from "./ProductCard";
-function Products({ products, addToCart, addToWishlist }) {
+function Products({ products, addToCart, addToWishlist, customerSession }) {
   const { category } = useParams();
   const [searchParams] = useSearchParams();
   const search = searchParams.get("search") || "";
@@ -43,6 +43,7 @@ function Products({ products, addToCart, addToWishlist }) {
                 product={product}
                 addToCart={addToCart}
                 addToWishlist={addToWishlist}
+                customerSession={customerSession}
               />
             ))}
           </div>

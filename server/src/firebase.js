@@ -75,3 +75,31 @@ export async function verifyFirebaseToken(token) {
   if (!hasFirebaseConfig || !token) return null;
   return getAuth().verifyIdToken(token);
 }
+
+export async function listFirebaseUsers() {
+  if (!hasFirebaseConfig) return [];
+  const result = await getAuth().listUsers(1000);
+  return result.users.map((user) => ({
+    id: `firebase:${user.uid}`,
+    firebaseUid: user.uid,
+    name: user.displayName || user.email?.split("@")[0] || "User",
+    email: user.email || "",
+    phone: user.phoneNumber || "",
+    address: "",
+    city: "Bhiwadi",
+    state: "Rajasthan",
+    pincode: "",
+    role: user.customClaims?.role === "partner" ? "partner" : "customer",
+    orders: 0,
+    spent: 0,
+    createdAt: user.metadata.creationTime || null,
+  }));
+}
+
+export async function updateFirebaseUserRole(uid, role) {
+  if (!hasFirebaseConfig) throw new Error("Firebase Authentication is not configured");
+  const auth = getAuth();
+  const user = await auth.getUser(uid);
+  await auth.setCustomUserClaims(uid, { ...(user.customClaims || {}), role });
+  return { uid, name: user.displayName || user.email?.split("@")[0] || "User", email: user.email || "", phone: user.phoneNumber || "", role };
+}

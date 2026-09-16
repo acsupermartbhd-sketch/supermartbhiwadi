@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { getProductOldPrice, getProductPrice, isPartnerUser } from "../data/pricing";
+
 
 function ProductDetails({ products, addToCart, addToWishlist, wishlist = [], reviews = [], addReview, orders = [], customerSession }) {
   const { id } = useParams();
@@ -11,6 +13,9 @@ function ProductDetails({ products, addToCart, addToWishlist, wishlist = [], rev
   const isWishlisted = wishlist.some((item) => String(item.id) === String(product?.id));
   const images = [product?.image, ...(product?.images || [])].filter(Boolean).slice(0, 5);
   const productReviews = reviews.filter((review) => String(review.productId) === String(product?.id));
+  const isPartner = isPartnerUser(customerSession);
+  const price = getProductPrice(product || {}, customerSession);
+  const oldPrice = getProductOldPrice(product || {}, customerSession);
   const customerOrders = orders.filter((order) => {
     const orderEmail = order.customer?.email || order.customer_email;
     return customerSession && ((order.customerId && Number(order.customerId) === Number(customerSession.id)) || (orderEmail && orderEmail.toLowerCase() === customerSession.email?.toLowerCase()));
@@ -51,7 +56,7 @@ function ProductDetails({ products, addToCart, addToWishlist, wishlist = [], rev
   }, [product]);
 
   const handleAdd = () => {
-    addToCart(product);
+    addToCart({ ...product, price });
     setAdded(true);
     window.setTimeout(() => setAdded(false), 1000);
   };
@@ -128,13 +133,23 @@ function ProductDetails({ products, addToCart, addToWishlist, wishlist = [], rev
             </p>
 
             <div className="mt-6">
-              <span className="text-4xl font-bold">
-                ₹{product.price.toLocaleString("en-IN")}
+              {isPartner && (
+                <div className="mb-2">
+                  <span className="partner-price-badge">★ B2B Partner Price</span>
+                </div>
+              )}
+              <span className={`text-4xl font-bold ${isPartner ? "text-amber-600" : ""}`}>
+                ₹{price.toLocaleString("en-IN")}
               </span>
 
               <span className="ml-3 text-lg text-gray-400 line-through">
-                ₹{product.oldPrice.toLocaleString("en-IN")}
+                ₹{oldPrice.toLocaleString("en-IN")}
               </span>
+              {isPartner && (
+                <span className="ml-3 text-sm font-bold text-emerald-600">
+                  Save ₹{(oldPrice - price).toLocaleString("en-IN")} (Wholesale)
+                </span>
+              )}
             </div>
 
             <div className="product-detail-actions mt-8 flex gap-3 sm:gap-4">

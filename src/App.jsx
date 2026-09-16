@@ -4,6 +4,7 @@ import { onAuthStateChanged } from "firebase/auth";
 
 import Navbar from "./components/NavbarResponsive";
 import Footer from "./components/Footer";
+import ProfileModal from "./components/ProfileModal";
 
 const Home = lazy(() => import("./pages/Home"));
 const Products = lazy(() => import("./pages/Products"));
@@ -19,7 +20,7 @@ const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 import productsData from "./data/products";
 import { readCollection, writeCollection } from "./data/database";
-import { api } from "./data/api";
+import { api, clearCatalogCache } from "./data/api";
 import { firebaseAuth } from "./data/firebase";
 
 const starterShopReviews = [
@@ -48,19 +49,6 @@ function readReviews() {
   return storedReviews.some((review) => String(review.id).startsWith("seed-shop-")) ? storedReviews : [...starterShopReviews, ...storedReviews];
 }
 
-function mergeRemoteOrders(remoteOrders, currentOrders) {
-  const localById = new Map(currentOrders.map((order) => [String(order.id), order]));
-  const mergedOrders = remoteOrders.map((remoteOrder) => {
-    const localOrder = localById.get(String(remoteOrder.id));
-    return remoteOrder.items?.length || !localOrder?.items?.length
-      ? remoteOrder
-      : { ...localOrder, ...remoteOrder, items: localOrder.items };
-  });
-  const remoteIds = new Set(remoteOrders.map((order) => String(order.id)));
-  const retainedLocalOrders = currentOrders.filter((order) => !remoteIds.has(String(order.id)));
-  return [...new Map([...mergedOrders, ...retainedLocalOrders].map((order) => [String(order.id), order])).values()];
-}
-
 function hasSeenLaunchScreen() {
   try {
     return window.localStorage.getItem("supermart-launch-seen") === "true";
@@ -81,7 +69,24 @@ function App() {
     return session?.token ? session : null;
   });
   const [customerSession, setCustomerSession] = useState(() => readCollection("customer-session", null));
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [adminCustomers, setAdminCustomers] = useState([]);
+  const [adminCustomersError, setAdminCustomersError] = useState("");
   const [showLaunchScreen, setShowLaunchScreen] = useState(() => !hasSeenLaunchScreen());
+
+  const refreshAdminCustomers = useCallback(async () => {
+    if (!adminSession?.token) {
+      setAdminCustomers(customerSession ? [{ ...customerSession, orders: 0, spent: 0 }] : []);
+      setAdminCustomersError("Admin API session is unavailable. Start the server and sign in through the API to view all users.");
+      return;
+    }
+    try {
+      setAdminCustomersError("");
+      setAdminCustomers(await api.getAdminCustomers(adminSession.token));
+    } catch (error) {
+      setAdminCustomersError(error.message || "Unable to load registered users.");
+    }
+  }, [adminSession?.token]);
 
   useEffect(() => {
     if (!showLaunchScreen) return undefined;
@@ -103,48 +108,101 @@ function App() {
   useEffect(() => writeCollection("admin-session", adminSession), [adminSession]);
   useEffect(() => writeCollection("customer-session", customerSession), [customerSession]);
   useEffect(() => {
-    api.getProducts().then((remoteProducts) => {
-      if (remoteProducts.length) setProducts(remoteProducts);
-    }).catch(() => undefined);
-    api.getReviews().then((remoteReviews) => {
-      if (remoteReviews.length) setReviews(remoteReviews);
-    }).catch(() => undefined);
+    api.getProducts().then(setProducts).catch(() => undefined);
+    api.getReviews().then(setReviews).catch(() => undefined);
+  }, []);
+  useEffect(() => {
+    const refreshCatalogAfterAdminUpdate = (event) => {
+      if (event.key !== "supermart-catalog-updated") return;
+      clearCatalogCache();
+      api.getProducts().then(setProducts).catch(() => undefined);
+    };
+    window.addEventListener("storage", refreshCatalogAfterAdminUpdate);
+    return () => window.removeEventListener("storage", refreshCatalogAfterAdminUpdate);
   }, []);
   useEffect(() => {
     if (!adminSession?.token) {
       return;
     }
     api.getOrders(adminSession.token).then((remoteOrders) => {
-      setOrders((currentOrders) => mergeRemoteOrders(remoteOrders, currentOrders));
-    }).catch(() => undefined);
+      setOrders(remoteOrders);
+    }).catch((error) => {
+      if (error.status === 401) setAdminSession(null);
+    });
     api.getContactEvents(adminSession.token).then(setContactEvents).catch(() => undefined);
     api.getAdminReviews(adminSession.token).then(setReviews).catch(() => undefined);
-  }, [adminSession]);
+    refreshAdminCustomers();
+  }, [adminSession?.token, refreshAdminCustomers]);
   useEffect(() => {
     return onAuthStateChanged(firebaseAuth, async (user) => {
       if (!user) {
         setCustomerSession(null);
         return;
       }
+      const existing = readCollection("customer-session", null);
+      const isSameUser = existing && (existing.id === user.uid || existing.id === `firebase:${user.uid}` || existing.email === user.email);
+      if (isSameUser && existing.token) {
+        setCustomerSession(existing);
+      }
       try {
         const token = await user.getIdToken();
-        const result = await api.firebaseSync({ name: user.displayName, phone: user.phoneNumber || "" }, token);
-        setCustomerSession({ ...result.customer, token: result.token });
+        if (!isSameUser || !existing?.syncedAt || (Date.now() - Number(existing.syncedAt)) > 30 * 60 * 1000) {
+          const result = await api.firebaseSync({ name: user.displayName, phone: user.phoneNumber || "" }, token);
+          setCustomerSession({ ...result.customer, token: result.token, syncedAt: Date.now() });
+        }
       } catch {
-        if (import.meta.env.DEV) setCustomerSession({ id: `firebase:${user.uid}`, name: user.displayName || user.email?.split("@")[0], email: user.email, phone: user.phoneNumber || "", token: await user.getIdToken() });
+        // Offline/server-down fallback: try to read role from existing session or Firebase claims
+        const existingSession = readCollection("customer-session", null);
+        let role = "customer";
+        try {
+          const claims = (await user.getIdTokenResult()).claims;
+          if (claims?.role === "partner") role = "partner";
+        } catch {
+          // claims unavailable – check localStorage
+          if (existingSession?.email === user.email && existingSession?.role === "partner") {
+            role = "partner";
+          }
+        }
+        const fallbackSession = {
+          id: `firebase:${user.uid}`,
+          name: user.displayName || user.email?.split("@")[0],
+          email: user.email,
+          phone: user.phoneNumber || "",
+          role,
+          token: await user.getIdToken(),
+        };
+        if (import.meta.env.DEV) setCustomerSession(fallbackSession);
         else setCustomerSession(null);
       }
     });
   }, []);
   useEffect(() => {
     if (!customerSession?.token) return;
-    const loadCustomerOrders = () => api.getCustomerOrders(customerSession.token).then((customerOrders) => {
-      setOrders((currentOrders) => mergeRemoteOrders(customerOrders, currentOrders));
+    const token = customerSession.token;
+    let isCancelled = false;
+
+    const refreshCustomerRole = () => api.customerMe(token).then((customer) => {
+      if (isCancelled) return;
+      setCustomerSession((current) => {
+        if (!current) return current;
+        const keys = Object.keys(customer);
+        const hasDiff = keys.some((k) => current[k] !== customer[k]);
+        return hasDiff ? { ...current, ...customer, token: current.token } : current;
+      });
+    }).catch((error) => {
+      if (!isCancelled && error.status === 401) setCustomerSession(null);
+    });
+
+    const loadCustomerOrders = () => api.getCustomerOrders(token).then((customerOrders) => {
+      if (!isCancelled) setOrders(customerOrders);
     }).catch(() => undefined);
+
+    refreshCustomerRole();
     loadCustomerOrders();
-    const refreshTimer = window.setInterval(loadCustomerOrders, 15000);
-    return () => window.clearInterval(refreshTimer);
-  }, [customerSession]);
+    return () => {
+      isCancelled = true;
+    };
+  }, [customerSession?.token]);
 
   // Add product to cart
   const addToCart = (product) => {
@@ -290,11 +348,11 @@ function App() {
     }
     try {
       const remoteOrders = await api.getOrders(adminSession.token);
-      setOrders((currentOrders) => mergeRemoteOrders(remoteOrders, currentOrders));
+      setOrders(remoteOrders);
     } catch {
       // Keep locally saved orders visible when the API is temporarily unavailable.
     }
-  }, [adminSession]);
+  }, [adminSession?.token]);
 
   const placeOrder = async (orderDetails) => {
     try {
@@ -331,7 +389,17 @@ function App() {
         <div className="launch-progress" aria-hidden="true"><i /></div>
       </div>}
 
-      {!isAdminArea && <Navbar customerSession={customerSession} onLogout={() => setCustomerSession(null)} cartCount={cartCount} wishlistCount={wishlistCount} onContactClick={() => logContact()} onWhatsAppClick={() => logContact("whatsapp-button")} />}
+      {!isAdminArea && <Navbar customerSession={customerSession} onLogout={() => setCustomerSession(null)} cartCount={cartCount} wishlistCount={wishlistCount} onContactClick={() => logContact()} onWhatsAppClick={() => logContact("whatsapp-button")} onEditProfile={() => setShowProfileModal(true)} />}
+      {showProfileModal && customerSession && (
+        <ProfileModal
+          customer={customerSession}
+          onClose={() => setShowProfileModal(false)}
+          onSave={(updated) => {
+            setCustomerSession((current) => current ? { ...current, ...updated, token: current.token } : current);
+            setShowProfileModal(false);
+          }}
+        />
+      )}
 
       <div className="flex-1">
         <Suspense fallback={<div className="flex min-h-[50vh] items-center justify-center text-sm font-bold text-slate-500">Loading Super Mart...</div>}>
@@ -359,6 +427,7 @@ function App() {
                 products={products}
                 addToCart={addToCart}
                 addToWishlist={addToWishlist}
+                customerSession={customerSession}
               />
             }
           />
@@ -370,6 +439,7 @@ function App() {
                 products={products}
                 addToCart={addToCart}
                 addToWishlist={addToWishlist}
+                customerSession={customerSession}
               />
             }
           />
@@ -424,7 +494,7 @@ function App() {
 
           <Route
             path="/checkout"
-            element={customerSession ? <Checkout cart={cart} placeOrder={placeOrder} customer={customerSession} /> : <Login onLogin={loginCustomer} onSignup={signupCustomer} />}
+            element={customerSession ? <Checkout cart={cart} placeOrder={placeOrder} customer={customerSession} onProfileUpdate={(profile) => setCustomerSession((current) => current ? { ...current, ...profile, token: current.token } : current)} /> : <Login onLogin={loginCustomer} onSignup={signupCustomer} />}
           />
 
           <Route
@@ -435,7 +505,30 @@ function App() {
           <Route
             path="/admin"
             element={
-              adminSession ? <AdminPanel products={products} setProducts={setProducts} orders={orders} setOrders={setOrders} reviews={reviews} setReviews={setReviews} onSaveReview={saveAdminReview} onDeleteReview={deleteAdminReview} contactEvents={contactEvents} token={adminSession.token} refreshOrders={refreshOrders} onLogout={() => setAdminSession(null)} /> : <AdminLogin onLogin={loginAdmin} />
+              adminSession ? (
+                <AdminPanel
+                  products={products}
+                  setProducts={setProducts}
+                  orders={orders}
+                  setOrders={setOrders}
+                  reviews={reviews}
+                  setReviews={setReviews}
+                  onSaveReview={saveAdminReview}
+                  onDeleteReview={deleteAdminReview}
+                  contactEvents={contactEvents}
+                  registeredCustomers={adminCustomers}
+                  setRegisteredCustomers={setAdminCustomers}
+                  customersError={adminCustomersError}
+                  refreshCustomers={refreshAdminCustomers}
+                  token={adminSession.token}
+                  refreshOrders={refreshOrders}
+                  onLogout={() => setAdminSession(null)}
+                  customerSession={customerSession}
+                  setCustomerSession={setCustomerSession}
+                />
+              ) : (
+                <AdminLogin onLogin={loginAdmin} />
+              )
             }
           />
 
