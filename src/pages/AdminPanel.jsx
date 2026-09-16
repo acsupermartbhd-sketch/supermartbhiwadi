@@ -325,29 +325,25 @@ function AdminPanel({
     };
 
     let savedProduct = product;
-    if (token) {
-      try {
-        savedProduct = await api.saveProduct(
-          product,
-          token,
-          editingId !== "new" ? editingId : null
-        );
-        showToast(
-          editingId === "new"
-            ? "New product created successfully!"
-            : "Product updated successfully!",
-          "success"
-        );
-      } catch (error) {
-        if (!canUseLocalProductFallback(error)) {
-          setBusyAction("");
-          showToast(error.message || "Failed to save product.", "error");
-          return;
-        }
-        showToast("Saved to local browser database.", "info");
+    try {
+      savedProduct = await api.saveProduct(
+        product,
+        token || "",
+        editingId !== "new" ? editingId : null
+      );
+      showToast(
+        editingId === "new"
+          ? "New product created successfully!"
+          : "Product updated successfully!",
+        "success"
+      );
+    } catch (error) {
+      if (!canUseLocalProductFallback(error)) {
+        setBusyAction("");
+        showToast(error.message || "Failed to save product.", "error");
+        return;
       }
-    } else {
-      showToast("Saved in local browser session.", "info");
+      showToast("Saved to local browser database.", "info");
     }
 
     setProducts((current) =>
@@ -363,18 +359,16 @@ function AdminPanel({
   const deleteProduct = async (id) => {
     if (busyAction || !window.confirm("Permanently delete this product?")) return;
     setBusyAction(`delete-${id}`);
-    if (token) {
-      try {
-        await api.deleteProduct(id, token);
-        showToast("Product deleted from catalog.", "success");
-      } catch (error) {
-        if (!canUseLocalProductFallback(error)) {
-          setBusyAction("");
-          showToast(error.message || "Unable to delete product.", "error");
-          return;
-        }
-        showToast("Product deleted locally.", "info");
+    try {
+      await api.deleteProduct(id, token || "");
+      showToast("Product deleted from catalog.", "success");
+    } catch (error) {
+      if (!canUseLocalProductFallback(error)) {
+        setBusyAction("");
+        showToast(error.message || "Unable to delete product.", "error");
+        return;
       }
+      showToast("Product deleted locally.", "info");
     }
     setProducts((current) => current.filter((p) => p.id !== id));
     setBusyAction("");

@@ -492,7 +492,7 @@ app.get("/api/health", (_request, response) => {
 
 app.get("/api/products", async (_request, response, next) => {
   try {
-    response.setHeader("Cache-Control", "public, max-age=1800, stale-while-revalidate=3600");
+    response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
     response.json(await getCachedProducts());
   } catch (error) { next(error); }
 });

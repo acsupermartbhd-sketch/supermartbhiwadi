@@ -2,7 +2,7 @@ const apiBase = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
 const readCache = new Map();
 const pendingReads = new Map();
 const readCacheTtl = 30 * 60 * 1000;
-const cacheableReads = new Set(["/products", "/reviews"]);
+const cacheableReads = new Set(["/reviews"]);
 const persistentCachePrefix = `supermart-api-cache:${import.meta.env.VITE_FIREBASE_PROJECT_ID || "local"}`;
 
 function persistentCacheKey(path) {
