@@ -72,7 +72,6 @@ const defaultOrigins = [
   "https://supermartbhiwadi.com",
   "https://www.supermartbhiwadi.com",
   "https://supermartbhiwadi.vercel.app",
-  "https://supermart.vercel.app",
   "http://localhost:5173",
   "http://localhost:4000",
   "http://localhost:3000",
