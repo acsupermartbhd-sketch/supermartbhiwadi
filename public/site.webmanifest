@@ -1,21 +1,24 @@
 {
-  "name": "MyWebSite",
-  "short_name": "MySite",
+  "name": "Super Mart Bhiwadi",
+  "short_name": "SuperMart",
+  "description": "Best Laptops, Printers, CCTV & Electronics Shop in Bhiwadi",
+  "start_url": "/",
+  "scope": "/",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     },
     {
       "src": "/web-app-manifest-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "maskable"
+      "purpose": "any maskable"
     }
   ],
-  "theme_color": "#ffffff",
+  "theme_color": "#1458cf",
   "background_color": "#ffffff",
-  "display": "browser"
+  "display": "standalone"
 }

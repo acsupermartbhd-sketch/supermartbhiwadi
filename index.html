@@ -2,28 +2,58 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#1458cf" />
-    <meta name="robots" content="index, follow" />
-    <meta name="keywords" content="Super Mart Bhiwadi, Super Mart Bhiwadi Alwar, Super Mart, best laptop in Super Mart Bhiwadi, best electronics shop Bhiwadi, laptops Bhiwadi, printers Bhiwadi, CCTV cameras Bhiwadi, computer shop Bhiwadi" />
-
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    
+    <!-- Primary Meta Tags -->
+    <title>Super Mart Bhiwadi | Best Laptops, Printers, CCTV & Electronics Shop</title>
+    <meta name="title" content="Super Mart Bhiwadi | Best Laptops, Printers, CCTV & Electronics Shop" />
     <meta
       name="description"
-      content="Super Mart Bhiwadi - Best laptops, printers, CCTV cameras and electronics shop at Capital High Street, Bhiwadi, Alwar."
+      content="Super Mart Bhiwadi - Best shop for laptops, computers, printers, CCTV cameras, monitors & IT accessories at Capital High Street, Bhiwadi, Alwar. Call +91 95490 92686."
     />
-    <meta property="og:title" content="Super Mart Bhiwadi | Best Electronics Shop" />
-    <meta property="og:description" content="Shop laptops, mobiles, printers, monitors and accessories from Super Mart Bhiwadi, Capital High Street, Alwar." />
+    <meta name="keywords" content="Super Mart Bhiwadi, Super Mart Bhiwadi Alwar, Super Mart, best laptop shop in Bhiwadi, electronics shop Bhiwadi, laptops Bhiwadi, printers Bhiwadi, CCTV camera installation Bhiwadi, computer repair Bhiwadi, Capital High Street Bhiwadi" />
+    <meta name="author" content="Super Mart Bhiwadi" />
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://supermartbhiwadi.com/" />
+
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://supermartbhiwadi.com/" />
+    <meta property="og:site_name" content="Super Mart Bhiwadi" />
+    <meta property="og:title" content="Super Mart Bhiwadi | Best Laptops & Electronics Shop" />
+    <meta property="og:description" content="Buy top brand laptops, CCTV cameras, printers, monitors & IT accessories at Super Mart Bhiwadi, Capital High Street, Alwar." />
+    <meta property="og:image" content="https://supermartbhiwadi.com/web-app-manifest-512x512.png" />
+    <meta property="og:locale" content="en_IN" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://supermartbhiwadi.com/" />
+    <meta name="twitter:title" content="Super Mart Bhiwadi | Best Laptops & Electronics Shop" />
+    <meta name="twitter:description" content="Buy top brand laptops, CCTV cameras, printers, monitors & IT accessories at Super Mart Bhiwadi." />
+    <meta name="twitter:image" content="https://supermartbhiwadi.com/web-app-manifest-512x512.png" />
+
+    <!-- Geo / Local SEO Tags -->
+    <meta name="geo.region" content="IN-RJ" />
+    <meta name="geo.placename" content="Bhiwadi, Alwar, Rajasthan" />
+    <meta name="geo.position" content="28.2100;76.8647" />
+    <meta name="ICBM" content="28.2100, 76.8647" />
+
+    <!-- Structured Data (Schema.org) for Local Business & Electronics Store -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "computer and IT products",
-        "name": "Super Mart",
-        "image": "/img/logo.svg",
-        "logo": "/img/logo.svg",
+        "@type": ["ElectronicsStore", "ComputerStore", "LocalBusiness"],
+        "@id": "https://supermartbhiwadi.com/#store",
+        "name": "Super Mart Bhiwadi",
+        "url": "https://supermartbhiwadi.com/",
+        "image": "https://supermartbhiwadi.com/web-app-manifest-512x512.png",
+        "logo": "https://supermartbhiwadi.com/img/logo.svg",
         "telephone": "+91 95490 92686",
         "email": "supermartbhiwadi@gmail.com",
+        "priceRange": "₹₹",
         "address": {
           "@type": "PostalAddress",
           "streetAddress": "FGF 19-20, Capital High Street",
@@ -32,26 +62,48 @@
           "postalCode": "301019",
           "addressCountry": "IN"
         },
-        "areaServed": "Bhiwadi, Alwar, Rajasthan",
-        "priceRange": "₹₹"
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": 28.2100,
+          "longitude": 76.8647
+        },
+        "openingHoursSpecification": [
+          {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+            "opens": "10:00",
+            "closes": "20:00"
+          },
+          {
+            "@type": "OpeningHoursSpecification",
+            "dayOfWeek": "Sunday",
+            "opens": "10:00",
+            "closes": "14:00"
+          }
+        ],
+        "areaServed": {
+          "@type": "AdministrativeArea",
+          "name": "Bhiwadi, Alwar, Rajasthan"
+        },
+        "sameAs": [
+          "https://developerabhishek.vercel.app/"
+        ]
       }
     </script>
 
-    <!-- Favicon -->
+    <!-- Favicon & Icons -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
     <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="manifest" href="/site.webmanifest" />
 
-    <!-- Apple -->
+    <!-- Apple Touch Icon -->
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-title" content="SuperMart" />
-
-    <title>Super Mart Bhiwadi | Best Electronics Shop</title>
   </head>
 
   <body>
     <div id="root"></div>
-
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

@@ -3,3 +3,4 @@ Allow: /
 Disallow: /admin
 Disallow: /admin-login
 
+Sitemap: https://supermartbhiwadi.com/sitemap.xml
