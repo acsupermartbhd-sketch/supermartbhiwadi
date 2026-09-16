@@ -86,7 +86,7 @@ function NavbarResponsive({ customerSession, onLogout, cartCount = 0, wishlistCo
             <kbd className="search-shortcut">⌘ K</kbd>
             <button type="submit" className="search-button search-button-desktop"><span>{searching ? "Searching..." : "Search"}</span><i aria-hidden="true">→</i></button>
           </form>
-          <div className="store-location hidden shrink-0 items-center gap-1 rounded-lg bg-blue-50 px-3 py-2 text-xs font-black text-blue-700 xl:flex" aria-label="Store location"><FaLocationDot /> FGF 19-20, Capital High Street, Bhiwadi</div>
+          <div className="store-location hidden shrink-0 items-center gap-1 rounded-lg bg-blue-50 px-3 py-2 text-xs font-black text-blue-700 xl:flex" aria-label="Store location"><FaLocationDot /> FGH 12A, Capital High Street, Bhiwadi</div>
 
           <div className="nav-actions ml-auto flex shrink-0 items-center gap-1 sm:gap-2 md:ml-4">
             <a href="https://wa.me/919549092686" onClick={onWhatsAppClick} target="_blank" rel="noreferrer" className="whatsapp-live nav-secondary-action hidden items-center gap-2 rounded-xl px-3 py-2 text-emerald-600 transition hover:bg-emerald-50 lg:flex" aria-label="Chat with Super Mart on WhatsApp">
@@ -126,7 +126,7 @@ function NavbarResponsive({ customerSession, onLogout, cartCount = 0, wishlistCo
 
       <div className={`mobile-menu-panel border-t border-slate-100 bg-white md:hidden ${menuOpen ? "is-open" : "is-closed"}`}>
         <div className="mx-auto max-w-7xl px-4 pb-5 pt-4 sm:px-6">
-          <div className="mt-3 rounded-lg bg-blue-50 px-3 py-2 text-xs font-black text-blue-700">⌖ FGF 19-20, Capital High Street, Bhiwadi, Alwar, Rajasthan 301019</div>
+          <div className="mt-3 rounded-lg bg-blue-50 px-3 py-2 text-xs font-black text-blue-700">⌖ FGH 12A, Capital High Street, Bhiwadi, Alwar, Rajasthan 301019</div>
           <nav className="mt-3 grid gap-1" aria-label="Mobile navigation">
             <Link to="/" onClick={closeMenu} className="mobile-link">⌂ <span>Home</span></Link>
             <button type="button" onClick={() => setCategoriesOpen((open) => !open)} className="mobile-link w-full justify-between"><span>▦ <span>Shop categories</span></span><span className={categoriesOpen ? "rotate-180" : ""}>▼</span></button>

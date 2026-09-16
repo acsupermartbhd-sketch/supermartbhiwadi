@@ -20,7 +20,7 @@ function Footer() {
         <div>
           <Link to="/" className="inline-flex items-center gap-2 text-3xl font-black tracking-[-.07em] text-white"><img src="/img/logo.svg" alt="" className="size-10 object-contain" />Super <span className="text-blue-400">Mart</span></Link>
           <p className="mt-4 max-w-xs text-sm leading-6 text-slate-400">Reliable electronics, practical accessories and helpful local support for homes and businesses.</p>
-          <div className="mt-6 inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900/50 px-3 py-2 text-xs font-bold text-slate-300"><FaLocationDot className="footer-icon" aria-hidden="true" /> FGF 19-20, Capital High Street, Bhiwadi, Alwar, Rajasthan 301019</div>
+          <div className="mt-6 inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900/50 px-3 py-2 text-xs font-bold text-slate-300"><FaLocationDot className="footer-icon" aria-hidden="true" /> FGH 12A, Capital High Street, Bhiwadi, Alwar, Rajasthan 301019</div>
         </div>
 
         <div><h3 className="footer-heading">Explore</h3><div className="footer-links"><Link to="/">Home</Link><Link to="/products">All products</Link><Link to="/wishlist">Wishlist</Link><Link to="/contact">Contact us</Link></div></div>
