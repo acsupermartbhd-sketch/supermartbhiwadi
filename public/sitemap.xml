@@ -5,20 +5,30 @@
   <!-- Main Store Homepage -->
   <url>
     <loc>https://supermartbhiwadi.com/</loc>
-    <lastmod>2026-09-16</lastmod>
+    <lastmod>2026-09-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
     <image:image>
+      <image:loc>https://supermartbhiwadi.com/image/main.webp</image:loc>
+      <image:title>Super Mart Bhiwadi Storefront &amp; Hero Electronics Showcase</image:title>
+      <image:caption>Best laptops, computers, printers, CCTV cameras and IT accessories shop in Bhiwadi, Alwar</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://supermartbhiwadi.com/image/main2.webp</image:loc>
+      <image:title>Super Mart Bhiwadi Laptop &amp; Computer Store</image:title>
+      <image:caption>Explore top brand laptops and electronics at Super Mart Bhiwadi, Capital High Street</image:caption>
+    </image:image>
+    <image:image>
       <image:loc>https://supermartbhiwadi.com/web-app-manifest-512x512.png</image:loc>
-      <image:title>Super Mart Bhiwadi - Best Laptops, Printers, CCTV &amp; Electronics Shop</image:title>
-      <image:caption>Best electronics, laptops, printers, CCTV cameras and accessories in Bhiwadi, Alwar</image:caption>
+      <image:title>Super Mart Bhiwadi Logo &amp; Store Badge</image:title>
+      <image:caption>Official logo of Super Mart Bhiwadi</image:caption>
     </image:image>
   </url>
 
   <!-- Products Catalog -->
   <url>
     <loc>https://supermartbhiwadi.com/products</loc>
-    <lastmod>2026-09-16</lastmod>
+    <lastmod>2026-09-17</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.95</priority>
   </url>
@@ -26,7 +36,7 @@
   <!-- Contact & Store Location Page -->
   <url>
     <loc>https://supermartbhiwadi.com/contact</loc>
-    <lastmod>2026-09-16</lastmod>
+    <lastmod>2026-09-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.90</priority>
   </url>
@@ -34,7 +44,7 @@
   <!-- Customer Login & Registration Page -->
   <url>
     <loc>https://supermartbhiwadi.com/login</loc>
-    <lastmod>2026-09-16</lastmod>
+    <lastmod>2026-09-17</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.70</priority>
   </url>
@@ -42,7 +52,7 @@
   <!-- Cart Page -->
   <url>
     <loc>https://supermartbhiwadi.com/cart</loc>
-    <lastmod>2026-09-16</lastmod>
+    <lastmod>2026-09-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.50</priority>
   </url>
@@ -50,7 +60,7 @@
   <!-- Wishlist Page -->
   <url>
     <loc>https://supermartbhiwadi.com/wishlist</loc>
-    <lastmod>2026-09-16</lastmod>
+    <lastmod>2026-09-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.50</priority>
   </url>

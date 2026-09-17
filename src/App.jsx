@@ -536,23 +536,6 @@ function App() {
         </Suspense>
       </div>
 
-      {!isAdminArea && (
-        <a
-          href="https://wa.me/919649374696?text=Hello%20Super%20Mart%20Support"
-          target="_blank"
-          rel="noreferrer"
-          onClick={() => logContact("whatsapp-float")}
-          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 flex items-center justify-center gap-2.5 rounded-full bg-emerald-500/95 sm:bg-slate-900/90 sm:border sm:border-emerald-500/40 sm:backdrop-blur-xl p-3 sm:px-4 sm:py-3 font-bold text-white shadow-2xl shadow-emerald-950/50 transition-all duration-300 hover:bg-emerald-600 hover:scale-105 active:scale-95 group"
-          aria-label="Chat on WhatsApp 96493 74696"
-        >
-          <div className="relative flex items-center justify-center">
-            <img src="/img/whatsapp.png" alt="" className="size-6 object-contain" />
-            <span className="absolute -top-1 -right-1 size-2.5 rounded-full bg-emerald-400 border-2 border-slate-900 animate-pulse" />
-          </div>
-          <span className="hidden sm:inline text-xs font-black text-emerald-300 group-hover:text-white transition-colors">WhatsApp 96493 74696</span>
-        </a>
-      )}
-
       {!isAdminArea && <Footer />}
 
     </div>

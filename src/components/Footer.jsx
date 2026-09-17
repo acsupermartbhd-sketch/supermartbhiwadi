@@ -48,9 +48,9 @@ function Footer() {
         </div>
       </div>
 
-      {/* Bottom Bar — Safe Padding to prevent floating overlap */}
+      {/* Bottom Bar */}
       <div className="border-t border-slate-800/80 bg-[#060e1b]">
-        <div className="mx-auto max-w-7xl px-5 py-6 pb-24 sm:pb-6 sm:px-6">
+        <div className="mx-auto max-w-7xl px-5 py-5 sm:px-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             {/* Copyright */}
             <p className="text-xs font-medium text-slate-400">© 2026 Super Mart Bhiwadi. All rights reserved.</p>
