@@ -36,34 +36,43 @@ function Footer() {
               <p className="pl-5 text-xs text-slate-500">Sun: 10:00 AM – 2:00 PM</p>
             </div>
           </div>
+          <a
+            href="https://wa.me/919649374696?text=Hello%20Super%20Mart%20Support"
+            target="_blank"
+            rel="noreferrer"
+            className="mt-4 inline-flex items-center gap-2 rounded-xl border border-emerald-500/40 bg-emerald-950/40 px-3.5 py-2 text-xs font-bold text-emerald-300 transition-all duration-200 hover:border-emerald-400 hover:bg-emerald-900/60 hover:scale-[1.02] shadow-lg shadow-emerald-950/40"
+          >
+            <img src="/img/whatsapp.png" alt="" className="size-4 shrink-0 object-contain" />
+            <span>WhatsApp Support: <strong>96493 74696</strong></span>
+          </a>
         </div>
       </div>
 
-      {/* Bottom Bar */}
-      <div className="border-t border-slate-800">
-        <div className="mx-auto max-w-7xl px-5 py-4 sm:px-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {/* Bottom Bar — Safe Padding to prevent floating overlap */}
+      <div className="border-t border-slate-800/80 bg-[#060e1b]">
+        <div className="mx-auto max-w-7xl px-5 py-6 pb-24 sm:pb-6 sm:px-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             {/* Copyright */}
-            <p className="text-xs text-slate-500">© 2026 Super Mart Bhiwadi. All rights reserved.</p>
+            <p className="text-xs font-medium text-slate-400">© 2026 Super Mart Bhiwadi. All rights reserved.</p>
 
             {/* Trust Badges */}
-            <p className="text-xs text-slate-600">Secure shopping · Fast delivery · Local support</p>
+            <p className="text-xs text-slate-500 hidden md:block">Secure shopping · Fast delivery · Local support</p>
 
-            {/* Developer Credit — Pro Design */}
+            {/* Developer Credit — Pro High-Visibility Design */}
             <a
               href="https://developerabhishek.vercel.app/"
               target="_blank"
               rel="noreferrer"
-              className="group inline-flex items-center gap-2 self-start rounded-xl border border-slate-700/60 bg-slate-800/50 px-3 py-1.5 text-xs font-bold text-slate-400 transition-all duration-200 hover:border-blue-500/50 hover:bg-blue-950/40 hover:text-blue-300 sm:self-auto"
+              className="group inline-flex items-center gap-2.5 self-start rounded-2xl border border-blue-500/40 bg-gradient-to-r from-blue-950/90 via-slate-900 to-indigo-950/90 px-4 py-2 text-xs font-black text-white shadow-xl shadow-blue-950/50 transition-all duration-300 hover:scale-105 hover:border-blue-400 hover:shadow-blue-500/20 sm:self-auto"
               aria-label="Visit Developer Abhishek's portfolio"
             >
-              <span className="flex size-5 shrink-0 items-center justify-center rounded-md bg-gradient-to-br from-blue-500 to-violet-600 shadow-sm shadow-blue-900/50">
-                <FiCode className="size-3 text-white" aria-hidden="true" />
+              <span className="flex size-6 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 via-indigo-600 to-purple-600 shadow-md shadow-blue-900/60 group-hover:rotate-12 transition-transform duration-300">
+                <FiCode className="size-3.5 text-white" aria-hidden="true" />
               </span>
-              <span className="leading-none">
-                Crafted by <strong className="text-slate-200 group-hover:text-blue-200 transition-colors">Developer Abhishek</strong>
+              <span className="leading-none text-xs">
+                Crafted by <span className="bg-gradient-to-r from-blue-300 to-indigo-200 bg-clip-text text-transparent font-black">Developer Abhishek</span>
               </span>
-              <FiExternalLink className="size-3 shrink-0 opacity-50 group-hover:opacity-100 transition-opacity" aria-hidden="true" />
+              <FiExternalLink className="size-3.5 text-blue-400 shrink-0 opacity-70 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" aria-hidden="true" />
             </a>
           </div>
         </div>
