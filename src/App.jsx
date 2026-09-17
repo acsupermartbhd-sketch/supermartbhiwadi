@@ -292,7 +292,7 @@ function App() {
   };
 
   const logContact = (source = "website-call-button") => {
-    const event = { id: Date.now(), contact_number: "+91 95490 92686", source, created_at: new Date().toISOString() };
+    const event = { id: Date.now(), contact_number: "+91 96493 74696", source, created_at: new Date().toISOString() };
     setContactEvents((current) => [event, ...current]);
     api.logContactEvent({ contactNumber: event.contact_number, source: event.source }).catch(() => undefined);
   };
@@ -535,6 +535,20 @@ function App() {
           </Routes>
         </Suspense>
       </div>
+
+      {!isAdminArea && (
+        <a
+          href="https://wa.me/919649374696?text=Hello%20Super%20Mart%20Support"
+          target="_blank"
+          rel="noreferrer"
+          onClick={() => logContact("whatsapp-float")}
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 rounded-full bg-emerald-500 px-4 py-3 font-bold text-white shadow-2xl transition-all duration-300 hover:bg-emerald-600 hover:scale-105 active:scale-95"
+          aria-label="Chat on WhatsApp"
+        >
+          <img src="/img/whatsapp.png" alt="" className="size-6 object-contain" />
+          <span className="hidden sm:inline text-xs font-black">WhatsApp 96493 74696</span>
+        </a>
+      )}
 
       {!isAdminArea && <Footer />}
 

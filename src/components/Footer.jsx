@@ -11,7 +11,7 @@ function Footer() {
       <div className="bg-[#102d5a]">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-5 py-6 sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <div><p className="text-xs font-black uppercase tracking-[.16em] text-blue-200">Need help choosing?</p><p className="mt-1 text-lg font-black text-white">Talk to our Bhiwadi support team.</p></div>
-          <div className="flex flex-wrap gap-2"><a href="tel:+919549092686" className="footer-cta">☎ Call us</a><a href="https://wa.me/919549092686" target="_blank" rel="noreferrer" className="footer-cta footer-cta-green"><img src="/img/whatsapp.png" alt="" className="size-4" /> WhatsApp</a></div>
+          <div className="flex flex-wrap gap-2"><a href="tel:+919649374696" className="footer-cta">☎ Call us</a><a href="https://wa.me/919649374696" target="_blank" rel="noreferrer" className="footer-cta footer-cta-green"><img src="/img/whatsapp.png" alt="" className="size-4" /> WhatsApp</a></div>
         </div>
       </div>
 
@@ -20,7 +20,7 @@ function Footer() {
         <div>
           <Link to="/" className="inline-flex items-center gap-2 text-3xl font-black tracking-[-.07em] text-white"><img src="/img/logo.svg" alt="" className="size-10 object-contain" />Super <span className="text-blue-400">Mart</span></Link>
           <p className="mt-4 max-w-xs text-sm leading-6 text-slate-400">Reliable electronics, practical accessories and helpful local support for homes and businesses.</p>
-          <div className="mt-6 inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900/50 px-3 py-2 text-xs font-bold text-slate-300"><FaLocationDot className="footer-icon" aria-hidden="true" /> FGH 12A, Capital High Street, Bhiwadi, Alwar, Rajasthan 301019</div>
+          <div className="mt-6 inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-900/50 px-3 py-2 text-xs font-bold text-slate-300"><FaLocationDot className="footer-icon" aria-hidden="true" /> F-GF 19-20 12A, Capital High Street, Bhiwadi, Alwar, Rajasthan 301019</div>
         </div>
 
         <div><h3 className="footer-heading">Explore</h3><div className="footer-links"><Link to="/">Home</Link><Link to="/products">All products</Link><Link to="/wishlist">Wishlist</Link><Link to="/contact">Contact us</Link></div></div>
@@ -29,7 +29,7 @@ function Footer() {
         <div>
           <h3 className="footer-heading">Customer care</h3>
           <div className="footer-contact">
-            <a href="tel:+919549092686"><FaPhone className="footer-icon" aria-hidden="true" /> <span>+91 95490 92686</span></a>
+            <a href="tel:+919649374696"><FaPhone className="footer-icon" aria-hidden="true" /> <span>+91 96493 74696</span></a>
             <a href="mailto:supermartbhiwadi@gmail.com"><BiLogoGmail className="footer-icon" aria-hidden="true" /> <span>supermartbhiwadi@gmail.com</span></a>
             <div className="mt-1 space-y-0.5">
               <p><FaClock className="footer-icon" aria-hidden="true" /> <span>Mon–Sat: 10:00 AM – 7:00 PM</span></p>

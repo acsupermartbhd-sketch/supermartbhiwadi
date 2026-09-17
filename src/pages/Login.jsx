@@ -13,21 +13,26 @@ function Login({ onLogin, onSignup }) {
   const requestedMode = searchParams.get("mode") === "signup" ? "signup" : "login";
   const [mode, setMode] = useState(requestedMode);
 
-  const readableAuthError = (authError) => ({
-    "auth/email-already-in-use": "This email is already registered. Please log in.",
-    "auth/invalid-credential": "Email or password is incorrect.",
-    "auth/invalid-email": "Please enter a valid email address.",
-    "auth/weak-password": "Password must be at least 6 characters.",
-    "auth/operation-not-allowed": "Email/password sign up is not enabled in Firebase Console.",
-    "auth/configuration-not-found": "Firebase Authentication is not configured. Enable Email/Password in Firebase Console > Authentication > Sign-in method, then add this website domain under Settings > Authorized domains.",
-    "auth/admin-restricted-operation": "Email/password sign-in is disabled. Enable Email/Password in Firebase Console > Authentication > Sign-in method.",
-    "auth/invalid-api-key": "Firebase API key is invalid. Check the new project configuration in the frontend .env file.",
-    "auth/app-not-authorized": "This website is not authorized for the Firebase project. Add its domain in Authentication > Settings > Authorized domains.",
-    "auth/too-many-requests": "Too many login attempts. Wait a few minutes and try again.",
-    "auth/user-disabled": "This account has been disabled in Firebase Authentication.",
-    "auth/network-request-failed": "Network error. Check your internet connection and try again.",
-    "auth/user-not-found": "No account was found for this email.",
-  }[authError.code] || authError.message || "Unable to create your account.");
+  const readableAuthError = (authError) => {
+    if (authError.message && (authError.message.includes("banned") || authError.message.includes("suspended"))) {
+      return authError.message;
+    }
+    return {
+      "auth/email-already-in-use": "This email is already registered. Please log in.",
+      "auth/invalid-credential": "Email or password is incorrect.",
+      "auth/invalid-email": "Please enter a valid email address.",
+      "auth/weak-password": "Password must be at least 6 characters.",
+      "auth/operation-not-allowed": "Email/password sign up is not enabled in Firebase Console.",
+      "auth/configuration-not-found": "Firebase Authentication is not configured. Enable Email/Password in Firebase Console > Authentication > Sign-in method, then add this website domain under Settings > Authorized domains.",
+      "auth/admin-restricted-operation": "Email/password sign-in is disabled. Enable Email/Password in Firebase Console > Authentication > Sign-in method.",
+      "auth/invalid-api-key": "Firebase API key is invalid. Check the new project configuration in the frontend .env file.",
+      "auth/app-not-authorized": "This website is not authorized for the Firebase project. Add its domain in Authentication > Settings > Authorized domains.",
+      "auth/too-many-requests": "Too many login attempts. Wait a few minutes and try again.",
+      "auth/user-disabled": "This account has been disabled in Firebase Authentication.",
+      "auth/network-request-failed": "Network error. Check your internet connection and try again.",
+      "auth/user-not-found": "No account was found for this email.",
+    }[authError.code] || authError.message || "Unable to authenticate with these details.";
+  };
 
   const resetPassword = async () => {
     setError("");

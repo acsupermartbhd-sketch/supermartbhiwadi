@@ -47,8 +47,8 @@ function OrderInvoiceModal({ order, products, onClose }) {
           <div className="flex flex-col sm:flex-row justify-between gap-3 border-b border-slate-200 pb-4">
             <div>
               <p className="text-xl font-black text-slate-950 tracking-tight">SUPER MART BHIWADI</p>
-              <p className="text-xs text-slate-500 mt-0.5">FGH 12A, Capital High Street, Bhiwadi, Rajasthan - 301019</p>
-              <p className="text-xs text-slate-500">+91 95490 92686 · supermartbhiwadi@gmail.com</p>
+              <p className="text-xs text-slate-500 mt-0.5">F-GF 19-20 12A, Capital High Street, Bhiwadi, Rajasthan - 301019</p>
+              <p className="text-xs text-slate-500">+91 96493 74696 · supermartbhiwadi@gmail.com</p>
             </div>
             <div className="sm:text-right">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Order ID</p>

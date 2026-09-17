@@ -86,14 +86,14 @@ function NavbarResponsive({ customerSession, onLogout, cartCount = 0, wishlistCo
             <kbd className="search-shortcut">⌘ K</kbd>
             <button type="submit" className="search-button search-button-desktop"><span>{searching ? "Searching..." : "Search"}</span><i aria-hidden="true">→</i></button>
           </form>
-          <div className="store-location hidden shrink-0 items-center gap-1 rounded-lg bg-blue-50 px-3 py-2 text-xs font-black text-blue-700 xl:flex" aria-label="Store location"><FaLocationDot /> FGH 12A, Capital High Street, Bhiwadi</div>
+          <div className="store-location hidden shrink-0 items-center gap-1 rounded-lg bg-blue-50 px-3 py-2 text-xs font-black text-blue-700 xl:flex" aria-label="Store location"><FaLocationDot /> F-GF 19-20 12A, Capital High Street, Bhiwadi</div>
 
           <div className="nav-actions ml-auto flex shrink-0 items-center gap-1 sm:gap-2 md:ml-4">
-            <a href="https://wa.me/919549092686" onClick={onWhatsAppClick} target="_blank" rel="noreferrer" className="whatsapp-live nav-secondary-action hidden items-center gap-2 rounded-xl px-3 py-2 text-emerald-600 transition hover:bg-emerald-50 lg:flex" aria-label="Chat with Super Mart on WhatsApp">
+            <a href="https://wa.me/919649374696" onClick={onWhatsAppClick} target="_blank" rel="noreferrer" className="whatsapp-live nav-secondary-action hidden items-center gap-2 rounded-xl px-3 py-2 text-emerald-600 transition hover:bg-emerald-50 lg:flex" aria-label="Chat with Super Mart on WhatsApp">
               <img src="/img/whatsapp.png" alt="" className="size-5 object-contain" />
               <span className="nav-action-label text-xs font-black">WhatsApp</span><i className="whatsapp-indicator" aria-hidden="true" />
             </a>
-            <a href="tel:+919549092686" onClick={onContactClick} className="nav-secondary-action hidden items-center gap-2 rounded-lg px-2 py-2 text-slate-600 transition hover:bg-blue-50 hover:text-blue-700 lg:flex" aria-label="Call Super Mart">
+            <a href="tel:+919649374696" onClick={onContactClick} className="nav-secondary-action hidden items-center gap-2 rounded-lg px-2 py-2 text-slate-600 transition hover:bg-blue-50 hover:text-blue-700 lg:flex" aria-label="Call Super Mart">
               <span className="nav-action-icon text-lg">☎</span><span className="nav-action-label text-xs font-bold">Call us</span>
             </a>
             <Link to="/wishlist" onClick={closeMenu} className="nav-icon hidden md:inline-flex" aria-label={`Wishlist${wishlistCount ? `, ${wishlistCount} items` : ""}`}>
@@ -126,7 +126,7 @@ function NavbarResponsive({ customerSession, onLogout, cartCount = 0, wishlistCo
 
       <div className={`mobile-menu-panel border-t border-slate-100 bg-white md:hidden ${menuOpen ? "is-open" : "is-closed"}`}>
         <div className="mx-auto max-w-7xl px-4 pb-5 pt-4 sm:px-6">
-          <div className="mt-3 rounded-lg bg-blue-50 px-3 py-2 text-xs font-black text-blue-700">⌖ FGH 12A, Capital High Street, Bhiwadi, Alwar, Rajasthan 301019</div>
+          <div className="mt-3 rounded-lg bg-blue-50 px-3 py-2 text-xs font-black text-blue-700">⌖ F-GF 19-20 12A, Capital High Street, Bhiwadi, Alwar, Rajasthan 301019</div>
           <nav className="mt-3 grid gap-1" aria-label="Mobile navigation">
             <Link to="/" onClick={closeMenu} className="mobile-link">⌂ <span>Home</span></Link>
             <button type="button" onClick={() => setCategoriesOpen((open) => !open)} className="mobile-link w-full justify-between"><span>▦ <span>Shop categories</span></span><span className={categoriesOpen ? "rotate-180" : ""}>▼</span></button>
@@ -134,7 +134,7 @@ function NavbarResponsive({ customerSession, onLogout, cartCount = 0, wishlistCo
             <Link to="/cart" onClick={closeMenu} className="mobile-link">🛒 <span>Cart {cartCount > 0 && `(${cartCount})`}</span></Link>
             <Link to="/contact" onClick={closeMenu} className="mobile-link">✉ <span>Contact</span></Link>
           </nav>
-          <div className="mt-4 grid grid-cols-2 gap-2"><a href="https://wa.me/919549092686" onClick={onWhatsAppClick} target="_blank" rel="noreferrer" className="mobile-action-button flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-2.5 text-xs font-black text-white"><img src="/img/whatsapp.png" alt="" className="size-5 object-contain" />WhatsApp</a><a href="tel:+919549092686" onClick={onContactClick} className="mobile-action-button flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-2.5 text-xs font-black text-white"><span aria-hidden="true">☎</span> Call now</a></div>
+          <div className="mt-4 grid grid-cols-2 gap-2"><a href="https://wa.me/919649374696" onClick={onWhatsAppClick} target="_blank" rel="noreferrer" className="mobile-action-button flex items-center justify-center gap-2 rounded-xl bg-emerald-500 py-2.5 text-xs font-black text-white"><img src="/img/whatsapp.png" alt="" className="size-5 object-contain" />WhatsApp</a><a href="tel:+919649374696" onClick={onContactClick} className="mobile-action-button flex items-center justify-center gap-2 rounded-xl bg-blue-600 py-2.5 text-xs font-black text-white"><span aria-hidden="true">☎</span> Call now</a></div>
         </div>
       </div>
     </header>

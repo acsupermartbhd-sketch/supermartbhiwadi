@@ -237,7 +237,8 @@ function toCustomer(snapshot) {
     state: row.state || "Rajasthan",
     pincode: row.pincode || "",
     role: row.role === "partner" ? "partner" : "customer",
-    createdAt: timestampValue(row.createdAt || row.created_at),
+    isBanned: Boolean(row.isBanned || row.banned),
+    createdAt: timestampValue(row.createdAt || row.created_at) || row.metadata?.creationTime || null,
   };
 }
 
@@ -566,6 +567,10 @@ app.post("/api/customer/firebase-sync", async (request, response, next) => {
     const reference = existing?.ref || (existing?.id ? collection("customers").doc(existing.id) : collection("customers").doc());
     const current = (typeof existing?.data === "function" ? existing.data() : existing) || {};
 
+    if (current.isBanned || current.banned) {
+      return response.status(403).json({ error: "Your account has been suspended/banned by admin. Contact support at +91 96493 74696." });
+    }
+
     const mergedData = {
       firebaseUid: decoded.uid,
       name: targetName || current.name || decoded.email.split("@")[0],
@@ -578,6 +583,7 @@ app.post("/api/customer/firebase-sync", async (request, response, next) => {
       createdAt: current.createdAt || new Date(),
       updatedAt: new Date(),
       role: current.role === "partner" ? "partner" : "customer",
+      isBanned: false,
     };
 
     const needsWrite = !existing || current.name !== mergedData.name || current.phone !== mergedData.phone || current.firebaseUid !== decoded.uid;
@@ -601,6 +607,7 @@ app.post("/api/customer/login", async (request, response, next) => {
     const customer = result.empty ? null : result.docs[0];
     if (!customer || !(await bcrypt.compare(String(request.body.password || ""), customer.data().password_hash || ""))) return response.status(401).json({ error: "Invalid email or password" });
     const view = toCustomer(customer);
+    if (view.isBanned) return response.status(403).json({ error: "Your account has been suspended/banned by admin. Contact support at +91 96493 74696." });
     setCachedCustomerById(view.id, view);
     if (customer.data()?.firebaseUid) setCachedCustomerByUid(customer.data().firebaseUid, view);
     response.json({ customer: view, token: jwt.sign({ id: view.id, email: view.email, role: "customer" }, jwtSecret, { expiresIn: "30d" }) });
@@ -612,10 +619,14 @@ app.get("/api/customer/me", async (request, response) => {
   if (!identity) return response.status(401).json({ error: "Customer authentication required" });
   try {
     const cached = getCachedCustomerById(identity.id);
-    if (cached) return response.json(cached);
+    if (cached) {
+      if (cached.isBanned) return response.status(403).json({ error: "Account suspended/banned. Contact support at +91 96493 74696." });
+      return response.json(cached);
+    }
     const customer = await collection("customers").doc(identity.id).get();
     if (!customer.exists) return response.status(404).json({ error: "Customer not found" });
     const custObj = toCustomer(customer);
+    if (custObj.isBanned) return response.status(403).json({ error: "Account suspended/banned. Contact support at +91 96493 74696." });
     setCachedCustomerById(identity.id, custObj);
     response.json(custObj);
   } catch {
@@ -724,6 +735,10 @@ app.patch("/api/admin/customers/:id", requireAdmin, async (request, response, ne
       }
     }
 
+    const isBanned = request.body.isBanned !== undefined ? Boolean(request.body.isBanned) : undefined;
+    const payload = { role, updatedAt: new Date() };
+    if (isBanned !== undefined) payload.isBanned = isBanned;
+
     // Update Firebase Auth custom claims if user exists in Firebase Auth
     let authUser = null;
     try {
@@ -736,12 +751,12 @@ app.patch("/api/admin/customers/:id", requireAdmin, async (request, response, ne
 
     // Update or create Firestore customer doc without redundant post-write read
     if (customerRef) {
-      await customerRef.set({ role, updatedAt: new Date() }, { merge: true });
+      await customerRef.set(payload, { merge: true });
       const currentData = customerDoc?.data ? customerDoc.data() : {};
-      const updated = toCustomer({ id: customerRef.id, data: () => ({ ...currentData, role, updatedAt: new Date() }) });
+      const updated = toCustomer({ id: customerRef.id, data: () => ({ ...currentData, ...payload }) });
       setCachedCustomerById(customerRef.id, updated);
       if (firebaseUid) setCachedCustomerByUid(firebaseUid, updated);
-      return response.json({ ...updated, id: rawId, role });
+      return response.json({ ...updated, id: rawId, role, ...(isBanned !== undefined ? { isBanned } : {}) });
     }
 
     if (db) {
@@ -757,6 +772,7 @@ app.patch("/api/admin/customers/:id", requireAdmin, async (request, response, ne
           state: request.body.state || "Rajasthan",
           pincode: request.body.pincode || "",
           role,
+          isBanned: isBanned || false,
           createdAt: new Date(),
           updatedAt: new Date(),
         };
@@ -764,7 +780,7 @@ app.patch("/api/admin/customers/:id", requireAdmin, async (request, response, ne
         const updated = toCustomer({ id: newRef.id, data: () => newRecord });
         setCachedCustomerById(newRef.id, updated);
         if (firebaseUid) setCachedCustomerByUid(firebaseUid, updated);
-        return response.json({ ...updated, id: rawId, role });
+        return response.json({ ...updated, id: rawId, role, isBanned: newRecord.isBanned });
       } catch {}
     }
 

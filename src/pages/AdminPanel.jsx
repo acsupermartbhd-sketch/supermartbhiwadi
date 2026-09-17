@@ -525,6 +525,47 @@ function AdminPanel({
     }
   };
 
+  const handleToggleBanCustomer = async (customer) => {
+    const customerId = customer.id || customer.firebaseUid || customer.email;
+    if (!customerId) return;
+    const targetBanState = !customer.isBanned;
+
+    if (targetBanState && !window.confirm(`Are you sure you want to BAN ${customer.name || customer.email}? Banned users will be blocked from logging in or placing orders.`)) {
+      return;
+    }
+
+    setRegisteredCustomers((current) =>
+      current.map((item) => {
+        const matches =
+          item.id === customer.id ||
+          (item.email &&
+            customer.email &&
+            item.email.toLowerCase() === customer.email.toLowerCase()) ||
+          (item.firebaseUid && item.firebaseUid === customer.firebaseUid);
+        return matches ? { ...item, isBanned: targetBanState } : item;
+      })
+    );
+
+    if (token) {
+      try {
+        await api.updateCustomerRole(customerId, customer.role || "customer", token, {
+          name: customer.name,
+          email: customer.email,
+          phone: customer.phone,
+          isBanned: targetBanState,
+        });
+        showToast(
+          `User ${customer.name || customer.email} is now ${targetBanState ? "BANNED 🚫" : "ACTIVE ✅"}`,
+          targetBanState ? "warning" : "success"
+        );
+      } catch (error) {
+        showToast(`Ban update error: ${error.message}`, "error");
+      }
+    } else {
+      showToast(`User set to ${targetBanState ? "Banned" : "Active"} (local session)`, "info");
+    }
+  };
+
   const exportOrdersCSV = () => {
     const header =
       "Order ID,Customer,Email,Phone,City,Pincode,Payment,Total,Status,Date,Items Count";
@@ -869,6 +910,7 @@ function AdminPanel({
               <CustomersManager
                 customers={customersWithStats}
                 onUpdateRole={handleUpdateCustomerRole}
+                onToggleBan={handleToggleBanCustomer}
                 error={customersError}
                 onRefresh={refreshCustomers}
                 onExportCSV={exportCustomersCSV}
@@ -880,6 +922,7 @@ function AdminPanel({
               <CustomersManager
                 customers={customersWithStats.filter((c) => c.role === "partner")}
                 onUpdateRole={handleUpdateCustomerRole}
+                onToggleBan={handleToggleBanCustomer}
                 error={customersError}
                 onRefresh={refreshCustomers}
                 onExportCSV={exportCustomersCSV}
@@ -1440,6 +1483,7 @@ function OrdersManager({
 function CustomersManager({
   customers = [],
   onUpdateRole,
+  onToggleBan,
   error,
   onRefresh,
   onExportCSV,
@@ -1488,7 +1532,7 @@ function CustomersManager({
           <p className="text-xs sm:text-sm text-slate-400 mt-0.5">
             {partnerOnly
               ? "Verified business partners enjoy wholesale rates across the entire Super Mart catalog."
-              : "Promote trusted business buyers to B2B Partner to activate wholesale pricing automatically."}
+              : "Promote business buyers to B2B Partner or ban problematic users from accessing the storefront."}
           </p>
         </div>
 
@@ -1549,28 +1593,36 @@ function CustomersManager({
             <thead>
               <tr className="border-b border-slate-800 text-xs font-bold uppercase text-slate-400">
                 <th className="pb-3 px-3">User & Contact</th>
+                <th className="pb-3 px-3">Joined / Signup</th>
                 <th className="pb-3 px-3">Location</th>
-                <th className="pb-3 px-3">Role Status</th>
+                <th className="pb-3 px-3">Role & Status</th>
                 <th className="pb-3 px-3">Orders</th>
                 <th className="pb-3 px-3">Lifetime Spend</th>
-                <th className="pb-3 px-3 text-right">Switch Role</th>
+                <th className="pb-3 px-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
               {filteredCustomers.map((c) => {
                 const isPartner = c.role === "partner";
+                const isBanned = Boolean(c.isBanned);
                 return (
                   <tr
                     key={c.id || c.email || c.phone}
                     className={`hover:bg-slate-800/30 transition ${
-                      isPartner ? "bg-amber-950/10" : ""
+                      isBanned
+                        ? "bg-rose-950/20"
+                        : isPartner
+                        ? "bg-amber-950/10"
+                        : ""
                     }`}
                   >
                     <td className="py-3.5 px-3">
                       <div className="flex items-center gap-3">
                         <div
                           className={`size-9 rounded-full flex items-center justify-center font-black text-xs shrink-0 ${
-                            isPartner
+                            isBanned
+                              ? "bg-rose-950 text-rose-300 border border-rose-700"
+                              : isPartner
                               ? "bg-gradient-to-br from-amber-500 to-yellow-600 text-slate-950"
                               : "bg-slate-800 text-slate-200"
                           }`}
@@ -1583,6 +1635,11 @@ function CustomersManager({
                             {isPartner && (
                               <span className="text-amber-400 text-xs" title="B2B Partner">
                                 ★
+                              </span>
+                            )}
+                            {isBanned && (
+                              <span className="text-xs px-1.5 py-0.5 rounded bg-rose-900/80 text-rose-300 font-bold border border-rose-700">
+                                BANNED
                               </span>
                             )}
                           </p>
@@ -1599,20 +1656,31 @@ function CustomersManager({
                     </td>
 
                     <td className="py-3.5 px-3 text-xs text-slate-300">
+                      {c.createdAt ? formatDateTime(c.createdAt) : "First visit customer"}
+                    </td>
+
+                    <td className="py-3.5 px-3 text-xs text-slate-300">
                       {c.city || "Bhiwadi"}
                       {c.pincode ? `, ${c.pincode}` : ""}
                     </td>
 
                     <td className="py-3.5 px-3">
-                      <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold ${
-                          isPartner
-                            ? "bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-amber-300 border border-amber-500/40"
-                            : "bg-slate-800 text-slate-300 border border-slate-700"
-                        }`}
-                      >
-                        {isPartner ? "★ B2B Partner" : "Customer"}
-                      </span>
+                      <div className="flex flex-col gap-1 items-start">
+                        <span
+                          className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                            isPartner
+                              ? "bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-amber-300 border border-amber-500/40"
+                              : "bg-slate-800 text-slate-300 border border-slate-700"
+                          }`}
+                        >
+                          {isPartner ? "★ B2B Partner" : "Customer"}
+                        </span>
+                        {isBanned ? (
+                          <span className="text-[11px] font-bold text-rose-400">🚫 Access Blocked</span>
+                        ) : (
+                          <span className="text-[11px] font-semibold text-emerald-400">✓ Account Active</span>
+                        )}
+                      </div>
                     </td>
 
                     <td className="py-3.5 px-3 text-sm font-semibold text-slate-200">
@@ -1623,30 +1691,45 @@ function CustomersManager({
                       {money(c.totalSpent)}
                     </td>
 
-                    {/* Role Switcher Action */}
+                    {/* Actions: Role Switch & Ban Button */}
                     <td className="py-3.5 px-3 text-right">
-                      <div className="inline-flex items-center p-1 rounded-xl bg-slate-950 border border-slate-800">
+                      <div className="inline-flex items-center gap-2">
+                        <div className="inline-flex items-center p-1 rounded-xl bg-slate-950 border border-slate-800">
+                          <button
+                            type="button"
+                            onClick={() => onUpdateRole(c, "customer")}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                              !isPartner
+                                ? "bg-slate-700 text-white shadow"
+                                : "text-slate-400 hover:text-white"
+                            }`}
+                          >
+                            Customer
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onUpdateRole(c, "partner")}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1 ${
+                              isPartner
+                                ? "bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950 font-black shadow"
+                                : "text-amber-400 hover:text-amber-300"
+                            }`}
+                          >
+                            <span>★ Partner</span>
+                          </button>
+                        </div>
+
                         <button
                           type="button"
-                          onClick={() => onUpdateRole(c, "customer")}
-                          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                            !isPartner
-                              ? "bg-slate-700 text-white shadow"
-                              : "text-slate-400 hover:text-white"
+                          onClick={() => onToggleBan && onToggleBan(c)}
+                          className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer flex items-center gap-1 border ${
+                            isBanned
+                              ? "bg-emerald-950/80 hover:bg-emerald-900 text-emerald-300 border-emerald-700"
+                              : "bg-rose-950/80 hover:bg-rose-900 text-rose-300 border-rose-800"
                           }`}
+                          title={isBanned ? "Unban user account" : "Ban user from website"}
                         >
-                          Customer
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => onUpdateRole(c, "partner")}
-                          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1 ${
-                            isPartner
-                              ? "bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950 font-black shadow"
-                              : "text-amber-400 hover:text-amber-300"
-                          }`}
-                        >
-                          <span>★ Partner</span>
+                          {isBanned ? "Unban User" : "🚫 Ban"}
                         </button>
                       </div>
                     </td>
@@ -2470,10 +2553,10 @@ function OrderInvoiceModal({ order, products = [], onClose, onUpdateStatus }) {
                 Electronics, Appliances, Laptops & Home Essentials
               </p>
               <p className="text-xs text-slate-600">
-                Alwar Bypass Road, Bhiwadi, Rajasthan - 301019
+                F-GF 19-20 12A, Capital High Street, Bhiwadi, Rajasthan - 301019
               </p>
               <p className="text-xs text-slate-600 font-semibold">
-                Phone: +91 98964 59345 · supermartbhiwadi@gmail.com
+                Phone: +91 96493 74696 · supermartbhiwadi@gmail.com
               </p>
             </div>
             <div className="sm:text-right">
