@@ -2,17 +2,17 @@ const categories = [
   {
     name: "Desktop",
     icon: "💻",
-    children: ["Desktop CPU", "Desktop RAM (Memory)", "Graphic Card", "Cabinet", "Cabinet Fan", "Power Supply", "UPS", "UPS Batteries", "Motherboard", "Desktop Accessories", "Mouse", "Keyboard", "Speakers"],
+    children: ["Desktop", "Desktop CPU", "Desktop RAM (Memory)", "Graphic Card", "Cabinet", "Cabinet Fan", "Power Supply", "UPS", "UPS Batteries", "Motherboard", "Desktop Accessories", "Mouse", "Keyboard", "Speakers"],
   },
   {
     name: "Laptop",
     icon: "💻",
-    children: ["HP / Dell Laptops", "Laptop", "Laptop RAM", "Laptop SSD", "Laptop Charger", "Laptop Battery", "Laptop Accessories"],
+    children: ["Laptop", "Laptop RAM", "Laptop SSD", "Laptop Charger", "Laptop Battery", "Laptop Accessories"],
   },
   {
     name: "Networking",
     icon: "🌐",
-    children: ["Cables", "Desktop Switch", "Router", "USB Wi-Fi Adapter", "Rack & Accessories", "Tools", "PoE Switch", "Fiber Switch", "Fiber Accessories", "Fiber Router", "Fiber Media Converter", "Fiber Patch Cord", "Fiber Module", "Access Point", "Range Extender"],
+    children: ["Cable", "Desktop Switch", "Router", "USB Wi-Fi Adapter", "Rack & Accessories", "Tools", "PoE Switch", "Fiber Switch", "Fiber Accessories", "Fiber Router", "Fiber Media Converter", "Fiber Patch Cord", "Fiber Module", "Access Point", "Range Extender"],
   },
   {
     name: "Printers",

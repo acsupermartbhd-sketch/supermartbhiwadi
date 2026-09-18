@@ -129,6 +129,7 @@ function AdminPanel({
   onSaveReview,
   onDeleteReview,
   contactEvents = [],
+  inquiries = [],
   registeredCustomers = [],
   setRegisteredCustomers,
   customersError,
@@ -428,6 +429,28 @@ function AdminPanel({
     if (busyAction) return;
     setBusyAction(`order-${orderId}`);
 
+    const targetOrder = orders.find((o) => o.id === orderId);
+    const wasDelivered = targetOrder?.status === "Delivered";
+    const isNowDelivered = newStatus === "Delivered";
+
+    // Auto-update local product stock if marking as Delivered for the first time
+    if (isNowDelivered && !wasDelivered && targetOrder) {
+      const orderItems = getOrderItems(targetOrder, products);
+      setProducts((currentProducts) => {
+        const nextProducts = currentProducts.map((prod) => {
+          const matchingItem = orderItems.find((item) => String(item.id) === String(prod.id));
+          if (matchingItem) {
+            const currentStock = Number(prod.stock || 0);
+            const deductQty = Number(matchingItem.quantity || 1);
+            return { ...prod, stock: Math.max(0, currentStock - deductQty) };
+          }
+          return prod;
+        });
+        writeCollection("products", nextProducts);
+        return nextProducts;
+      });
+    }
+
     // Optimistically update order in state
     setOrders((current) =>
       current.map((order) =>
@@ -451,7 +474,18 @@ function AdminPanel({
             order.id === orderId ? { ...order, ...savedOrder, status: newStatus } : order
           )
         );
-        showToast(`Order #${orderId} marked as ${newStatus}`, "success");
+        showToast(
+          isNowDelivered
+            ? `Order #${orderId} marked as Delivered. Product stock automatically updated!`
+            : `Order #${orderId} marked as ${newStatus}`,
+          "success"
+        );
+        // Refresh catalog to sync with updated Firestore stock
+        if (isNowDelivered) {
+          window.setTimeout(() => {
+            api.getProducts().then(setProducts).catch(() => undefined);
+          }, 1500);
+        }
       } catch (error) {
         showToast(
           `Status updated locally. API: ${error.message || "Offline sync queued"}`,
@@ -461,7 +495,12 @@ function AdminPanel({
         setBusyAction("");
       }
     } else {
-      showToast(`Order #${orderId} updated locally (dev mode)`, "success");
+      showToast(
+        isNowDelivered
+          ? `Order #${orderId} marked as Delivered. Stock automatically updated!`
+          : `Order #${orderId} updated locally (dev mode)`,
+        "success"
+      );
       setBusyAction("");
     }
   };
@@ -832,6 +871,7 @@ function AdminPanel({
               { id: "products", label: "Products & Stock", icon: FiTag, alert: lowStockCount },
               { id: "reviews", label: "Reviews", icon: FiStar, count: newReviewCount },
               { id: "contacts", label: "Call Activity", icon: FiPhoneCall, count: newContactCount },
+              { id: "inquiries", label: "Form Inquiries", icon: FiMessageSquare, count: inquiries.length },
             ].map(({ id, label, icon: Icon, count, alert, isGold }) => {
               const active = tab === id;
               return (
@@ -977,6 +1017,8 @@ function AdminPanel({
             )}
 
             {tab === "contacts" && <ContactEventsManager events={contactEvents} />}
+
+            {tab === "inquiries" && <InquiriesManager inquiries={inquiries} />}
           </section>
         </div>
       </div>
@@ -2472,6 +2514,145 @@ function ContactEventsManager({ events = [] }) {
         </div>
       ) : (
         <EmptyState text="No call events logged yet." />
+      )}
+    </div>
+  );
+}
+
+// -------------------------------------------------------------
+// SUB-COMPONENT: INQUIRIES MANAGER (Contact Form Submissions)
+// -------------------------------------------------------------
+function InquiriesManager({ inquiries = [] }) {
+  const [search, setSearch] = useState("");
+  const [expanded, setExpanded] = useState(null);
+
+  const filtered = inquiries.filter((inq) => {
+    const q = search.toLowerCase();
+    return (
+      !q ||
+      (inq.name || "").toLowerCase().includes(q) ||
+      (inq.email || "").toLowerCase().includes(q) ||
+      (inq.phone || "").toLowerCase().includes(q) ||
+      (inq.subject || "").toLowerCase().includes(q) ||
+      (inq.message || "").toLowerCase().includes(q)
+    );
+  });
+
+  return (
+    <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-5 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div>
+          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+            <FiMessageSquare className="text-indigo-400" />
+            Form Inquiries
+          </h2>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Messages submitted via the website contact form.
+          </p>
+        </div>
+        <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-indigo-500/20 text-indigo-300">
+          {inquiries.length} Inquiry{inquiries.length !== 1 ? "ies" : ""}
+        </span>
+      </div>
+
+      {/* Search */}
+      <div className="relative mb-4">
+        <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 size-4" />
+        <input
+          type="text"
+          placeholder="Search by name, email, subject…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-800 border border-slate-700 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+        />
+      </div>
+
+      {filtered.length > 0 ? (
+        <div className="space-y-3">
+          {filtered.map((inq) => {
+            const isOpen = expanded === (inq.id || inq.email);
+            return (
+              <div
+                key={inq.id || inq.email}
+                className="rounded-xl border border-slate-700/60 bg-slate-800/50 overflow-hidden"
+              >
+                <button
+                  onClick={() => setExpanded(isOpen ? null : (inq.id || inq.email))}
+                  className="w-full flex items-center justify-between px-4 py-3 text-left cursor-pointer hover:bg-slate-700/40 transition"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="size-8 rounded-full bg-indigo-500/20 text-indigo-300 flex items-center justify-center font-bold text-sm flex-shrink-0">
+                      {(inq.name || "?")[0].toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-white truncate">{inq.name}</p>
+                      <p className="text-xs text-slate-400 truncate">{inq.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0 ml-3">
+                    <span className="hidden sm:inline-block px-2 py-0.5 rounded-full bg-slate-700 text-slate-300 text-[11px] font-medium truncate max-w-[120px]">
+                      {inq.subject || "General Inquiry"}
+                    </span>
+                    <span className="text-[11px] text-slate-500 whitespace-nowrap">
+                      {formatDateTime(inq.createdAt)}
+                    </span>
+                    <FiChevronRight className={`size-4 text-slate-400 transition-transform ${isOpen ? "rotate-90" : ""}`} />
+                  </div>
+                </button>
+
+                {isOpen && (
+                  <div className="px-4 pb-4 pt-1 border-t border-slate-700/60 space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Email</p>
+                        <a href={`mailto:${inq.email}`} className="text-indigo-300 hover:underline break-all">{inq.email}</a>
+                      </div>
+                      {inq.phone && (
+                        <div>
+                          <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Phone</p>
+                          <a href={`tel:${inq.phone}`} className="text-emerald-300 hover:underline">{inq.phone}</a>
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Subject</p>
+                        <p className="text-white">{inq.subject || "General Inquiry"}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Received</p>
+                        <p className="text-slate-300">{formatDateTime(inq.createdAt)}</p>
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-400 font-semibold uppercase tracking-wider mb-2">Message</p>
+                      <p className="text-sm text-slate-200 whitespace-pre-wrap bg-slate-900/60 rounded-xl p-3 border border-slate-700/50">
+                        {inq.message}
+                      </p>
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <a
+                        href={`mailto:${inq.email}?subject=Re: ${encodeURIComponent(inq.subject || "Your Inquiry")}`}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 transition"
+                      >
+                        Reply via Email
+                      </a>
+                      {inq.phone && (
+                        <a
+                          href={`tel:${inq.phone}`}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 transition"
+                        >
+                          <FiPhoneCall className="size-3" />
+                          Call
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <EmptyState text={search ? "No inquiries match your search." : "No contact form inquiries yet."} />
       )}
     </div>
   );

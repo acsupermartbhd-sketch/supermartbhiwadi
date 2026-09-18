@@ -9,18 +9,17 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
   const navigate = useNavigate();
 
   const productCategories = [
-    { name: "Laptops", icon: "💻", path: "/products/Laptops" },
-    { name: "Mobiles", icon: "📱", path: "/products/Mobiles" },
+    { name: "Laptops", icon: "💻", path: "/products/Laptop" },
+    { name: "Desktop & PC", icon: "🖥️", path: "/products/Desktop" },
     { name: "Printers", icon: "🖨️", path: "/products/Printers" },
-    { name: "Cameras", icon: "📷", path: "/products/Cameras" },
-    { name: "Headphones", icon: "🎧", path: "/products/Headphones" },
-    { name: "Monitors", icon: "🖥️", path: "/products/Monitors" },
-    { name: "Keyboards", icon: "⌨️", path: "/products/Keyboards" },
-    { name: "Mouse", icon: "🖱️", path: "/products/Mouse" },
-    { name: "Smart Watches", icon: "⌚", path: "/products/Smart-Watches" },
-    { name: "Speakers", icon: "🔊", path: "/products/Speakers" },
-    { name: "Gaming", icon: "🎮", path: "/products/Gaming" },
-    { name: "Accessories", icon: "🔌", path: "/products/Accessories" },
+    { name: "CCTV & Security", icon: "📹", path: "/products/Security" },
+    { name: "Networking", icon: "🌐", path: "/products/Networking" },
+    { name: "Cables", icon: "🔌", path: "/products/Cable" },
+    { name: "Storage", icon: "💾", path: "/products/Storage" },
+    { name: "Displays", icon: "🖥️", path: "/products/Display" },
+    { name: "Software", icon: "💿", path: "/products/Software" },
+    { name: "Accessories", icon: "🎧", path: "/products/Accessories" },
+    { name: "Telecom", icon: "☎️", path: "/products/Telecom" },
   ];
 
   const handleSearch = (e) => {
@@ -405,10 +404,17 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
           </div>
 
           <Link
-            to="/products/Laptops"
+            to="/products/Laptop"
             className="py-4 font-medium text-gray-700 transition hover:text-blue-600"
           >
             Laptops
+          </Link>
+
+          <Link
+            to="/products/Desktop"
+            className="py-4 font-medium text-gray-700 transition hover:text-blue-600"
+          >
+            Desktop
           </Link>
 
           <Link
@@ -419,18 +425,12 @@ function Navbar({ cartCount = 0, wishlistCount = 0 }) {
           </Link>
 
           <Link
-            to="/products/Mobiles"
+            to="/products/Security"
             className="py-4 font-medium text-gray-700 transition hover:text-blue-600"
           >
-            Mobiles
+            CCTV
           </Link>
 
-          <Link
-            to="/contact"
-            className="py-4 font-medium text-gray-700 transition hover:text-blue-600"
-          >
-            Contact
-          </Link>
         </nav>
       </div>
 

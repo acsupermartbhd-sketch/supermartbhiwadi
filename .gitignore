@@ -12,7 +12,10 @@ dist
 dist-ssr
 *.local
 .env
-server/.env
+.env.*
+.env*
+*.env*
+server/.env*
 *-firebase-adminsdk-*.json
 /supermart/
 

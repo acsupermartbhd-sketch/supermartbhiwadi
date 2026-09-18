@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import ProductCard from "./ProductCard";
 
-function Home({ products, addToCart, addToWishlist, reviews = [], customerSession }) {
+function Home({ products = [], addToCart, addToWishlist, reviews = [], customerSession }) {
   const [activeSlide, setActiveSlide] = useState(0);
   const [reviewDirection, setReviewDirection] = useState("down");
-  const featuredProducts = products.slice(0, 6);
+
   const slides = products.slice(0, 3).map((product, index) => ({
     product,
     label: index === 0 ? "Editor's pick" : index === 1 ? "Work smarter" : "New favourite",
@@ -45,39 +45,87 @@ function Home({ products, addToCart, addToWishlist, reviews = [], customerSessio
   const categories = [
     {
       name: "Laptops",
+      desc: "HP, Dell, Asus, Acer",
       icon: "💻",
-      link: "/products/Laptops",
-      color: "bg-blue-100",
+      link: "/products/Laptop",
+      color: "from-blue-500/10 to-indigo-500/10 border-blue-200/60 hover:border-blue-500",
+      accent: "text-blue-600 bg-blue-50",
     },
     {
       name: "Printers",
+      desc: "Ink Tank, Laser & Barcode",
       icon: "🖨️",
-      link: "/products/Printers",
-      color: "bg-purple-100",
+      link: "/products/Printer",
+      color: "from-purple-500/10 to-pink-500/10 border-purple-200/60 hover:border-purple-500",
+      accent: "text-purple-600 bg-purple-50",
     },
     {
-      name: "CCTV Cameras",
-      icon: "📹",
-      link: "/products/CCTV-Cameras",
-      color: "bg-green-100",
-    },
-    {
-      name: "Monitors",
+      name: "Desktop & PC",
+      desc: "CPUs, RAM & Parts",
       icon: "🖥️",
-      link: "/products/Monitors",
-      color: "bg-orange-100",
+      link: "/products/Desktop",
+      color: "from-cyan-500/10 to-blue-500/10 border-cyan-200/60 hover:border-cyan-500",
+      accent: "text-cyan-700 bg-cyan-50",
+    },
+    {
+      name: "CCTV & Security",
+      desc: "Wi-Fi Cameras & NVR",
+      icon: "📹",
+      link: "/products/Security",
+      color: "from-emerald-500/10 to-teal-500/10 border-emerald-200/60 hover:border-emerald-500",
+      accent: "text-emerald-700 bg-emerald-50",
+    },
+    {
+      name: "Cables & Connectors",
+      desc: "HDMI, LAN, Audio, OTG",
+      icon: "🔌",
+      link: "/products/Cables",
+      color: "from-amber-500/10 to-orange-500/10 border-amber-200/60 hover:border-amber-500",
+      accent: "text-amber-700 bg-amber-50",
     },
     {
       name: "Accessories",
+      desc: "Keyboard, Mouse & Audio",
       icon: "🎧",
       link: "/products/Accessories",
-      color: "bg-pink-100",
+      color: "from-rose-500/10 to-pink-500/10 border-rose-200/60 hover:border-rose-500",
+      accent: "text-rose-600 bg-rose-50",
     },
   ];
 
+  // Group products by category – show up to 8 per category
+  const categoryGroups = useMemo(() => {
+    const groups = [
+      { key: "Laptop", label: "Laptops", link: "/products/Laptop", icon: "💻" },
+      { key: "Desktop", label: "Desktops & PCs", link: "/products/Desktop", icon: "🖥️" },
+      { key: "Printer", label: "Printers", link: "/products/Printers", icon: "🖨️" },
+      { key: "Security", label: "CCTV & Security", link: "/products/Security", icon: "📹" },
+      { key: "Cable", label: "Cables & Connectors", link: "/products/Cable", icon: "🔌" },
+      { key: "Networking", label: "Networking", link: "/products/Networking", icon: "🌐" },
+      { key: "Storage", label: "Storage Devices", link: "/products/Storage", icon: "💾" },
+      { key: "Display", label: "Monitors & Displays", link: "/products/Display", icon: "🖥️" },
+      { key: "Accessories", label: "Accessories", link: "/products/Accessories", icon: "🎧" },
+      { key: "Software", label: "Software", link: "/products/Software", icon: "💿" },
+      { key: "Telecom", label: "Telecom", link: "/products/Telecom", icon: "☎️" },
+    ];
+
+    return groups.map((group) => {
+      const matched = products.filter((p) => {
+        const cat = String(p.category || "").toLowerCase();
+        const name = String(p.name || "").toLowerCase();
+        const key = group.key.toLowerCase();
+        // cable collision prevention: cables must not appear in other categories
+        const isCable = cat.includes("cable") || name.includes("cable") || name.includes("hdmi") || name.includes("patch cord");
+        if (group.key !== "Cable" && group.key !== "Networking" && isCable) return false;
+        if (group.key === "Cable") return isCable;
+        return cat.includes(key) || cat === key;
+      }).slice(0, 8);
+      return { ...group, products: matched };
+    }).filter((g) => g.products.length > 0);
+  }, [products]);
+
   return (
     <main>
-
       {/* Hero slider */}
       <section className="home-hero">
         <div className="mx-auto grid max-w-7xl items-center gap-8 px-4 py-5 sm:px-6 sm:py-8 lg:py-10">
@@ -100,127 +148,234 @@ function Home({ products, addToCart, addToWishlist, reviews = [], customerSessio
       </section>
 
       {/* Categories */}
-      <section className="bg-slate-50 py-12 sm:py-16">
-        <div className="mx-auto max-w-7xl px-6">
-
+      <section className="bg-slate-50/80 py-12 sm:py-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="mb-10 text-center">
-            <p className="eyebrow">Shop by need</p>
-            <h2 className="mt-2 text-3xl font-black text-gray-900 sm:text-4xl">
+            <p className="eyebrow text-xs font-black uppercase tracking-wider text-blue-600">Explore Catalog</p>
+            <h2 className="mt-2 text-3xl font-black tracking-tight text-gray-900 sm:text-4xl">
               Shop By Category
             </h2>
-
-            <p className="mt-2 text-gray-500">
-              Find the perfect electronics for your needs
+            <p className="mt-2 text-gray-500 max-w-xl mx-auto text-sm sm:text-base">
+              Find genuine laptops, high-speed printers, CCTV cameras, cables, and premium computer parts.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-5 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
             {categories.map((category) => (
               <Link
                 key={category.name}
                 to={category.link}
-                className={`${category.color} rounded-2xl p-4 text-center transition hover:-translate-y-1 hover:shadow-lg sm:p-6`}
+                className={`group relative flex flex-col items-center justify-center rounded-2xl border bg-gradient-to-b ${category.color} p-4 text-center transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl sm:p-5`}
               >
-                <div className="text-4xl sm:text-5xl">{category.icon}</div>
-
-                <h3 className="mt-4 font-bold text-gray-800">
+                <div className="text-4xl sm:text-5xl transition-transform duration-300 group-hover:scale-110">
+                  {category.icon}
+                </div>
+                <h3 className="mt-3 font-bold text-gray-900 text-sm sm:text-base group-hover:text-blue-600 transition-colors">
                   {category.name}
                 </h3>
+                <p className="mt-1 text-[11px] text-gray-500 line-clamp-1">
+                  {category.desc}
+                </p>
+                <span className="mt-3 inline-flex items-center text-[11px] font-black text-blue-600 group-hover:translate-x-0.5 transition-transform">
+                  Browse →
+                </span>
               </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Featured Products */}
-      <section className="py-16">
-        <div className="mx-auto max-w-7xl px-6">
-
-          <div className="mb-10 flex items-end justify-between">
-            <div>
-              <p className="font-semibold text-blue-600">
-                BEST SELLERS
-              </p>
-
-              <h2 className="mt-2 text-3xl font-bold text-gray-900">
-                Featured Products
-              </h2>
+      {/* Products by Category Showcase */}
+      {categoryGroups.map((group) => (
+        <section key={group.key} className="py-10 sm:py-12 border-t border-slate-100">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
+            <div className="mb-6 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">{group.icon}</span>
+                <div>
+                  <h2 className="text-xl font-black text-slate-900 sm:text-2xl">{group.label}</h2>
+                  <p className="text-xs text-slate-500">{group.products.length} product{group.products.length !== 1 ? "s" : ""} available</p>
+                </div>
+              </div>
+              <Link
+                to={group.link}
+                className="shrink-0 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-black text-blue-700 transition hover:bg-blue-600 hover:text-white"
+              >
+                View all →
+              </Link>
             </div>
-
-            <Link
-              to="/products"
-              className="font-semibold text-blue-600 hover:underline"
-            >
-              View All →
-            </Link>
+            <div className="grid gap-4 sm:gap-5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+              {group.products.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  addToCart={addToCart}
+                  addToWishlist={addToWishlist}
+                  customerSession={customerSession}
+                  hideCategory={true}
+                />
+              ))}
+            </div>
           </div>
+        </section>
+      ))}
 
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {featuredProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                addToCart={addToCart}
-                addToWishlist={addToWishlist}
-                customerSession={customerSession}
-              />
-            ))}
+      {/* Fallback if no products from server yet */}
+      {categoryGroups.length === 0 && (
+        <section className="py-12 sm:py-16">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
+            <div className="rounded-2xl border border-dashed border-slate-200 bg-white py-16 text-center">
+              <p className="text-3xl">🔍</p>
+              <p className="mt-2 text-sm font-bold text-slate-700">Loading products...</p>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
+      {/* Reviews Marquee */}
       <section className="shop-review-section bg-blue-50 py-16">
         <div className="mx-auto grid max-w-7xl gap-8 px-6 lg:grid-cols-[.8fr_1.2fr]">
-          <div><p className="eyebrow">Super Mart community</p><h2 className="mt-2 text-3xl font-black text-slate-950">What customers say</h2><p className="mt-3 text-slate-600">Real experiences from the Super Mart community.</p><p className="mt-2 text-sm font-semibold text-blue-700">Your feedback helps us serve Bhiwadi better.</p><p className="mt-1 text-sm text-slate-500">Every review helps another shopper buy with confidence.</p><div className="mt-6 flex items-center gap-3"><span className="text-2xl text-amber-500">★★★★★</span><span className="text-sm font-black text-slate-600">Loved by local shoppers</span></div></div>
-          <div className="review-stack">{shopReviews.length ? <><div className="review-rail"><div className={`review-marquee-track review-marquee-${reviewDirection}`}>{topReviewLoop.map((review, index) => <ReviewCard key={`${review.id}-top-${index}`} review={review} />)}</div></div>{bottomReviews.length > 0 && <div className="review-rail"><div className={`review-marquee-track review-marquee-${reviewDirection === "down" ? "up" : "down"} review-marquee-slower`}>{bottomReviewLoop.map((review, index) => <ReviewCard key={`${review.id}-bottom-${index}`} review={review} />)}</div></div>}</> : <div className="rounded-2xl border border-dashed border-blue-200 bg-white/70 p-8 text-center text-sm text-slate-500">No reviews yet.</div>}</div>
+          <div>
+            <p className="eyebrow">Super Mart community</p>
+            <h2 className="mt-2 text-3xl font-black text-slate-950">What customers say</h2>
+            <p className="mt-3 text-slate-600">Real experiences from the Super Mart community.</p>
+            <p className="mt-2 text-sm font-semibold text-blue-700">Your feedback helps us serve Bhiwadi better.</p>
+            <p className="mt-1 text-sm text-slate-500">Every review helps another shopper buy with confidence.</p>
+            <div className="mt-6 flex items-center gap-3">
+              <span className="text-2xl text-amber-500">★★★★★</span>
+              <span className="text-sm font-black text-slate-600">Loved by local shoppers</span>
+            </div>
+          </div>
+          <div className="review-stack">
+            {shopReviews.length ? (
+              <>
+                <div className="review-rail">
+                  <div className={`review-marquee-track review-marquee-${reviewDirection}`}>
+                    {topReviewLoop.map((review, index) => (
+                      <ReviewCard key={`${review.id}-top-${index}`} review={review} />
+                    ))}
+                  </div>
+                </div>
+                {bottomReviews.length > 0 && (
+                  <div className="review-rail">
+                    <div className={`review-marquee-track review-marquee-${reviewDirection === "down" ? "up" : "down"} review-marquee-slower`}>
+                      {bottomReviewLoop.map((review, index) => (
+                        <ReviewCard key={`${review.id}-bottom-${index}`} review={review} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="rounded-2xl border border-dashed border-blue-200 bg-white/70 p-8 text-center text-sm text-slate-500">
+                No reviews yet.
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="bg-gray-900 py-16 text-white">
-        <div className="mx-auto grid max-w-7xl gap-8 px-6 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Pro-Level Features & Trust Badges */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-slate-950 via-[#0a1528] to-slate-950 py-16 sm:py-20 text-white">
+        {/* Glow ambient background elements */}
+        <div className="pointer-events-none absolute -top-24 left-1/4 size-96 rounded-full bg-blue-600/15 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-24 right-1/4 size-96 rounded-full bg-indigo-600/15 blur-3xl" />
 
-          <div className="text-center">
-            <div className="text-4xl">🚚</div>
-            <h3 className="mt-3 font-bold">Fast Delivery</h3>
-            <p className="mt-1 text-sm text-gray-400">
-              Quick and reliable delivery
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="mb-12 text-center">
+            <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-black uppercase tracking-wider text-blue-400">
+              Why Choose Super Mart
+            </span>
+            <h2 className="mt-3 text-2xl sm:text-4xl font-black tracking-tight text-white">
+              The Gold Standard in Local Electronics
+            </h2>
+            <p className="mt-2 text-xs sm:text-sm text-slate-400 max-w-md mx-auto">
+              Trusted by 10,000+ happy customers and 500+ businesses across Bhiwadi & NCR.
             </p>
           </div>
 
-          <div className="text-center">
-            <div className="text-4xl">🔒</div>
-            <h3 className="mt-3 font-bold">Secure Payment</h3>
-            <p className="mt-1 text-sm text-gray-400">
-              100% secure transactions
-            </p>
-          </div>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Card 1: Fast Delivery */}
+            <div className="group relative rounded-2xl border border-slate-800/80 bg-slate-900/50 p-6 backdrop-blur-xl transition-all duration-300 hover:-translate-y-2 hover:border-blue-500/50 hover:bg-slate-900/90 hover:shadow-2xl hover:shadow-blue-500/15">
+              <div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500/20 to-indigo-600/20 text-3xl shadow-inner group-hover:scale-110 transition-transform duration-300">
+                ⚡
+              </div>
+              <h3 className="mt-5 text-lg font-black text-white group-hover:text-blue-400 transition-colors">
+                Fast Local Delivery
+              </h3>
+              <p className="mt-2 text-xs leading-relaxed text-slate-400">
+                Express same-day dispatch in Bhiwadi and neighbouring industrial areas. Safely packaged for electronics.
+              </p>
+              <div className="mt-4 inline-flex items-center gap-1.5 text-[11px] font-bold text-blue-400">
+                <span>✓ Same day delivery available</span>
+              </div>
+            </div>
 
-          <div className="text-center">
-            <div className="text-4xl">↩️</div>
-            <h3 className="mt-3 font-bold">Easy Returns</h3>
-            <p className="mt-1 text-sm text-gray-400">
-              Hassle-free return policy
-            </p>
-          </div>
+            {/* Card 2: 100% Secure Payment */}
+            <div className="group relative rounded-2xl border border-slate-800/80 bg-slate-900/50 p-6 backdrop-blur-xl transition-all duration-300 hover:-translate-y-2 hover:border-emerald-500/50 hover:bg-slate-900/90 hover:shadow-2xl hover:shadow-emerald-500/15">
+              <div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-600/20 text-3xl shadow-inner group-hover:scale-110 transition-transform duration-300">
+                🔒
+              </div>
+              <h3 className="mt-5 text-lg font-black text-white group-hover:text-emerald-400 transition-colors">
+                100% Secure Payment
+              </h3>
+              <p className="mt-2 text-xs leading-relaxed text-slate-400">
+                Encrypted Razorpay checkout, UPI QR scan, NEFT/RTGS bank transfer, or Pay on Delivery options.
+              </p>
+              <div className="mt-4 inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-400">
+                <span>✓ 256-bit SSL encrypted</span>
+              </div>
+            </div>
 
-          <div className="text-center">
-            <div className="text-4xl">🎧</div>
-            <h3 className="mt-3 font-bold">24/7 Support</h3>
-            <p className="mt-1 text-sm text-gray-400">
-              We're always here to help
-            </p>
-          </div>
+            {/* Card 3: 100% Genuine & Easy Returns */}
+            <div className="group relative rounded-2xl border border-slate-800/80 bg-slate-900/50 p-6 backdrop-blur-xl transition-all duration-300 hover:-translate-y-2 hover:border-purple-500/50 hover:bg-slate-900/90 hover:shadow-2xl hover:shadow-purple-500/15">
+              <div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-600/20 text-3xl shadow-inner group-hover:scale-110 transition-transform duration-300">
+                🛡️
+              </div>
+              <h3 className="mt-5 text-lg font-black text-white group-hover:text-purple-400 transition-colors">
+                100% Genuine Warranty
+              </h3>
+              <p className="mt-2 text-xs leading-relaxed text-slate-400">
+                Direct official brand warranty on HP, Asus, Dell, Canon & CP Plus with GST tax invoice provided.
+              </p>
+              <div className="mt-4 inline-flex items-center gap-1.5 text-[11px] font-bold text-purple-400">
+                <span>✓ Official brand guarantee</span>
+              </div>
+            </div>
 
+            {/* Card 4: 24/7 Dedicated Support */}
+            <div className="group relative rounded-2xl border border-slate-800/80 bg-slate-900/50 p-6 backdrop-blur-xl transition-all duration-300 hover:-translate-y-2 hover:border-amber-500/50 hover:bg-slate-900/90 hover:shadow-2xl hover:shadow-amber-500/15">
+              <div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-600/20 text-3xl shadow-inner group-hover:scale-110 transition-transform duration-300">
+                🎧
+              </div>
+              <h3 className="mt-5 text-lg font-black text-white group-hover:text-amber-400 transition-colors">
+                24/7 Local Support
+              </h3>
+              <p className="mt-2 text-xs leading-relaxed text-slate-400">
+                Get instant product guidance, bulk quotation, or technical assistance via phone or WhatsApp.
+              </p>
+              <div className="mt-4 inline-flex items-center gap-1.5 text-[11px] font-bold text-amber-400">
+                <span>✓ WhatsApp & Call: 96493 74696</span>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
-
     </main>
   );
 }
 
 function ReviewCard({ review }) {
-  return <article className="review-card rounded-2xl bg-white p-5 shadow-sm"><div className="flex items-center justify-between gap-3"><strong className="text-slate-900">{review.name}</strong><span className="text-amber-500">{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</span></div><p className="mt-3 text-sm leading-6 text-slate-600">{review.text}</p><span className="mt-4 block text-xs font-black uppercase tracking-wider text-blue-500">Super Mart community</span></article>;
+  return (
+    <article className="review-card rounded-2xl bg-white p-5 shadow-sm">
+      <div className="flex items-center justify-between gap-3">
+        <strong className="text-slate-900">{review.name}</strong>
+        <span className="text-amber-500">{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</span>
+      </div>
+      <p className="mt-3 text-sm leading-6 text-slate-600">{review.text}</p>
+      <span className="mt-4 block text-xs font-black uppercase tracking-wider text-blue-500">Super Mart community</span>
+    </article>
+  );
 }
 
 export default Home;

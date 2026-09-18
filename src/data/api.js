@@ -93,9 +93,10 @@ export const api = {
   updateCustomerRole: (id, role, token, meta = {}) => request(`/admin/customers/${encodeURIComponent(id)}`, { method: "PATCH", body: { role, ...meta }, token }),
   getContactEvents: (token) => request("/admin/contact-events", { token }),
   logContactEvent: (body) => request("/contact-events", { method: "POST", body }),
-  submitInquiry: (body) => request("/inquiries", { method: "POST", body }),
+  submitInquiry: (body, token) => request("/inquiries", { method: "POST", body, token }),
   createOrder: (body, token) => request("/orders", { method: "POST", body, token }),
   saveProduct: (body, token, id) => request(id ? `/admin/products/${encodeURIComponent(id)}` : "/admin/products", { method: id ? "PATCH" : "POST", body, token }).then((result) => { clearCatalogCache(); localStorage.setItem("supermart-catalog-updated", String(Date.now())); return result; }),
   deleteProduct: (id, token) => request(`/admin/products/${encodeURIComponent(id)}`, { method: "DELETE", token }).then((result) => { clearCatalogCache(); localStorage.setItem("supermart-catalog-updated", String(Date.now())); return result; }),
   updateOrder: (id, status, token) => request(`/admin/orders/${encodeURIComponent(id)}`, { method: "PATCH", body: { status }, token }),
+  getInquiries: (token) => request("/admin/inquiries", { token }),
 };

@@ -364,6 +364,14 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 3px solid
 }
 .animate-modal { animation: modal-zoom-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
+@keyframes shimmer-sweep {
+  0% { transform: translateX(-150%) rotate(-45deg); }
+  45%, 100% { transform: translateX(250%) rotate(-45deg); }
+}
+.animate-shimmer {
+  animation: shimmer-sweep 3.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
 /* Clean Invoice Print Styles */
 @media print {
   body * {

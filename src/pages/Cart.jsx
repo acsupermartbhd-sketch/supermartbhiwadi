@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 
-function Cart({ cart, updateQuantity, removeFromCart }) {
+function Cart({ cart, products = [], updateQuantity, removeFromCart }) {
   const total = cart.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
@@ -37,68 +37,92 @@ function Cart({ cart, updateQuantity, removeFromCart }) {
           <div className="mt-10 grid gap-8 lg:grid-cols-3">
 
             <div className="space-y-4 lg:col-span-2">
-              {cart.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex flex-col gap-5 rounded-2xl bg-white p-5 shadow-sm sm:flex-row"
-                >
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="cart-product-image h-32 w-full rounded-xl object-contain sm:w-32"
-                  />
+              {cart.map((item) => {
+                const prod = products.find((p) => String(p.id) === String(item.id));
+                const maxStock = typeof prod?.stock === "number" ? prod.stock : (typeof item.stock === "number" ? item.stock : 999);
+                const isMaxStockReached = item.quantity >= maxStock;
 
-                  <div className="flex flex-1 flex-col justify-between">
-                    <div>
-                      <h3 className="text-xl font-bold">
-                        {item.name}
-                      </h3>
+                return (
+                  <div
+                    key={item.id}
+                    className="flex flex-col gap-5 rounded-2xl bg-white p-5 shadow-sm sm:flex-row"
+                  >
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="cart-product-image h-32 w-full rounded-xl object-contain sm:w-32"
+                    />
 
-                      <p className="mt-1 text-gray-500">
-                        {item.category}
-                      </p>
-                    </div>
+                    <div className="flex flex-1 flex-col justify-between">
+                      <div>
+                        <h3 className="text-xl font-bold">
+                          {item.name}
+                        </h3>
 
-                    <div className="mt-4 flex items-center justify-between">
+                        <p className="mt-1 text-gray-500">
+                          {item.category}
+                        </p>
 
-                      <div className="flex items-center rounded-lg border">
-                        <button
-                          onClick={() =>
-                            updateQuantity(item.id, item.quantity - 1)
-                          }
-                          className="px-4 py-2"
-                        >
-                          −
-                        </button>
-
-                        <span className="px-4">
-                          {item.quantity}
-                        </span>
-
-                        <button
-                          onClick={() =>
-                            updateQuantity(item.id, item.quantity + 1)
-                          }
-                          className="px-4 py-2"
-                        >
-                          +
-                        </button>
+                        {maxStock <= 5 && (
+                          <p className="mt-1 text-xs font-bold text-amber-600">
+                            Only {maxStock} left in stock
+                          </p>
+                        )}
                       </div>
 
-                      <strong className="text-xl">
-                        ₹{(item.price * item.quantity).toLocaleString("en-IN")}
-                      </strong>
-                    </div>
+                      <div className="mt-4 flex items-center justify-between">
 
-                    <button
-                      onClick={() => removeFromCart(item.id)}
-                      className="mt-3 text-left text-sm font-semibold text-red-500"
-                    >
-                      Remove
-                    </button>
+                        <div className="flex items-center rounded-lg border">
+                          <button
+                            onClick={() =>
+                              updateQuantity(item.id, item.quantity - 1)
+                            }
+                            className="px-4 py-2 hover:bg-slate-50 transition"
+                          >
+                            −
+                          </button>
+
+                          <span className="px-4 font-bold">
+                            {item.quantity}
+                          </span>
+
+                          <button
+                            disabled={isMaxStockReached}
+                            onClick={() =>
+                              updateQuantity(item.id, item.quantity + 1)
+                            }
+                            title={isMaxStockReached ? `Maximum available stock reached (${maxStock})` : "Add one more"}
+                            className={`px-4 py-2 transition ${
+                              isMaxStockReached
+                                ? "opacity-30 cursor-not-allowed bg-slate-100"
+                                : "hover:bg-slate-50"
+                            }`}
+                          >
+                            +
+                          </button>
+                        </div>
+
+                        {isMaxStockReached && (
+                          <span className="text-[11px] font-bold text-amber-600">
+                            Max ({maxStock})
+                          </span>
+                        )}
+
+                        <strong className="text-xl">
+                          ₹{(item.price * item.quantity).toLocaleString("en-IN")}
+                        </strong>
+                      </div>
+
+                      <button
+                        onClick={() => removeFromCart(item.id)}
+                        className="mt-3 text-left text-sm font-semibold text-red-500 hover:text-red-700 transition cursor-pointer"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Summary */}

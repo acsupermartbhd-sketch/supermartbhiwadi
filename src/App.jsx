@@ -64,6 +64,7 @@ function App() {
   const [orders, setOrders] = useState(() => readCollection("orders", []));
   const [reviews, setReviews] = useState(readReviews);
   const [contactEvents, setContactEvents] = useState(() => readCollection("contact-events", []));
+  const [inquiries, setInquiries] = useState([]);
   const [adminSession, setAdminSession] = useState(() => {
     const session = readCollection("admin-session", null);
     return session?.token ? session : null;
@@ -131,6 +132,7 @@ function App() {
     });
     api.getContactEvents(adminSession.token).then(setContactEvents).catch(() => undefined);
     api.getAdminReviews(adminSession.token).then(setReviews).catch(() => undefined);
+    api.getInquiries(adminSession.token).then(setInquiries).catch(() => undefined);
     refreshAdminCustomers();
   }, [adminSession?.token, refreshAdminCustomers]);
   useEffect(() => {
@@ -203,17 +205,27 @@ function App() {
     };
   }, [customerSession?.token]);
 
-  // Add product to cart
+  // Add product to cart with strict stock limit
   const addToCart = (product) => {
+    const liveProduct = products.find((p) => String(p.id) === String(product.id)) || product;
+    const maxStock = typeof liveProduct.stock === "number" ? liveProduct.stock : (typeof product.stock === "number" ? product.stock : 999);
+
+    if (maxStock <= 0) {
+      alert(`Sorry, "${product.name}" is currently out of stock.`);
+      return;
+    }
+
     setCart((currentCart) => {
-      const existing = currentCart.find(
-        (item) => item.id === product.id
-      );
+      const existing = currentCart.find((item) => String(item.id) === String(product.id));
 
       if (existing) {
+        if (existing.quantity >= maxStock) {
+          alert(`Only ${maxStock} units available in stock for "${product.name}". You cannot add more.`);
+          return currentCart;
+        }
         return currentCart.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
+          String(item.id) === String(product.id)
+            ? { ...item, quantity: item.quantity + 1, stock: maxStock }
             : item
         );
       }
@@ -223,22 +235,37 @@ function App() {
         {
           ...product,
           quantity: 1,
+          stock: maxStock,
         },
       ];
     });
   };
 
-  // Update quantity
+  // Update quantity with stock ceiling check
   const updateQuantity = (id, quantity) => {
     if (quantity <= 0) {
       removeFromCart(id);
       return;
     }
 
+    const prod = products.find((p) => String(p.id) === String(id));
+    const cartItem = cart.find((item) => String(item.id) === String(id));
+    const maxStock = typeof prod?.stock === "number" ? prod.stock : (typeof cartItem?.stock === "number" ? cartItem.stock : 999);
+
+    if (quantity > maxStock) {
+      alert(`Only ${maxStock} units available in stock for this product.`);
+      setCart((currentCart) =>
+        currentCart.map((item) =>
+          String(item.id) === String(id) ? { ...item, quantity: maxStock, stock: maxStock } : item
+        )
+      );
+      return;
+    }
+
     setCart((currentCart) =>
       currentCart.map((item) =>
-        item.id === id
-          ? { ...item, quantity }
+        String(item.id) === String(id)
+          ? { ...item, quantity, stock: maxStock }
           : item
       )
     );
@@ -461,6 +488,7 @@ function App() {
             element={
               <Cart
                 cart={cart}
+                products={products}
                 updateQuantity={updateQuantity}
                 removeFromCart={removeFromCart}
               />
@@ -480,7 +508,7 @@ function App() {
 
           <Route
             path="/contact"
-            element={<Contact onContactClick={logContact} />}
+            element={<Contact onContactClick={logContact} customerSession={customerSession} />}
           />
 
           <Route
@@ -512,6 +540,7 @@ function App() {
                   onSaveReview={saveAdminReview}
                   onDeleteReview={deleteAdminReview}
                   contactEvents={contactEvents}
+                  inquiries={inquiries}
                   registeredCustomers={adminCustomers}
                   setRegisteredCustomers={setAdminCustomers}
                   customersError={adminCustomersError}

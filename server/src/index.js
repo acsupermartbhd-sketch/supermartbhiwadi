@@ -947,6 +947,21 @@ app.post("/api/orders", async (request, response, next) => {
     }
 
     const normalizedItems = await normalizeOrderItems(items, customerRole);
+
+    // Verify stock availability: cannot order more than current stock in catalog
+    const catalogProducts = await getCachedProducts();
+    for (const item of normalizedItems) {
+      const prod = catalogProducts.find((p) => String(p.id) === String(item.id));
+      if (prod && typeof prod.stock === "number") {
+        if (prod.stock <= 0) {
+          throw new HttpError(400, `"${prod.name}" is currently out of stock.`);
+        }
+        if (item.quantity > prod.stock) {
+          throw new HttpError(400, `Only ${prod.stock} units available in stock for "${prod.name}". You requested ${item.quantity}.`);
+        }
+      }
+    }
+
     const subtotal = normalizedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const total = subtotal + (subtotal >= 999 ? 0 : 79);
     if (payment === "online") {
@@ -984,20 +999,6 @@ app.post("/api/orders", async (request, response, next) => {
   } catch (error) { next(error); }
 });
 
-app.post("/api/inquiries", async (request, response, next) => {
-  try {
-    const { name, email, phone, subject, message } = request.body;
-    if (!name || !email || !subject || !message) return response.status(400).json({ error: "Name, email, subject and message are required" });
-    const inquiry = { name: String(name).trim(), email: String(email).trim().toLowerCase(), phone: String(phone || "").trim(), subject: String(subject).trim(), message: String(message).trim(), createdAt: new Date() };
-    const reference = await collection("inquiries").add(inquiry);
-    notifyOnTelegram([
-      "New Super Mart inquiry", `Name: ${inquiry.name}`, `Phone: ${inquiry.phone || "Not provided"}`,
-      `Email: ${inquiry.email}`, `Subject: ${inquiry.subject}`, "", inquiry.message,
-    ].join("\n")).catch((error) => console.error("Telegram inquiry notification failed:", error.message));
-    response.status(201).json({ id: reference.id, message: "Inquiry received" });
-  } catch (error) { next(error); }
-});
-
 app.post("/api/contact-events", async (request, response, next) => {
   try {
     const { contactNumber, source } = request.body;
@@ -1024,10 +1025,67 @@ app.patch("/api/admin/orders/:id", requireAdmin, async (request, response, next)
       try {
         const existing = await reference.get();
         if (existing.exists) {
+          const orderData = existing.data();
+          const prevStatus = String(orderData.status || "").trim();
           const updatedAt = new Date();
-          await reference.update({ status, updatedAt });
+          let stockDeducted = Boolean(orderData.stockDeducted);
+
+          // Auto-deduct stock on delivery
+          if (status === "Delivered" && prevStatus !== "Delivered" && !stockDeducted) {
+            const rawItems = orderData.items || orderData.orderItems || [];
+            let itemsToDeduct = Array.isArray(rawItems) ? rawItems : [];
+            if (typeof rawItems === "string") {
+              try { itemsToDeduct = JSON.parse(rawItems); } catch {}
+            }
+            for (const item of itemsToDeduct) {
+              const productId = item.id || item.productId;
+              const qty = Math.max(1, Number(item.quantity) || 1);
+              if (productId) {
+                try {
+                  const prodRef = collection("products").doc(String(productId));
+                  const prodSnap = await prodRef.get();
+                  if (prodSnap.exists) {
+                    const currentStock = Number(prodSnap.data().stock ?? 0);
+                    const newStock = Math.max(0, currentStock - qty);
+                    await prodRef.update({ stock: newStock, updatedAt: new Date() });
+                  }
+                } catch (prodErr) {
+                  console.warn(`[Stock Auto-Update] Could not deduct product ${productId}:`, prodErr.message);
+                }
+              }
+            }
+            stockDeducted = true;
+            invalidateProductCache();
+          }
+
+          // Restore stock if previously delivered and now cancelled
+          if (prevStatus === "Delivered" && status === "Cancelled" && stockDeducted) {
+            const rawItems = orderData.items || orderData.orderItems || [];
+            let itemsToRestore = Array.isArray(rawItems) ? rawItems : [];
+            if (typeof rawItems === "string") {
+              try { itemsToRestore = JSON.parse(rawItems); } catch {}
+            }
+            for (const item of itemsToRestore) {
+              const productId = item.id || item.productId;
+              const qty = Math.max(1, Number(item.quantity) || 1);
+              if (productId) {
+                try {
+                  const prodRef = collection("products").doc(String(productId));
+                  const prodSnap = await prodRef.get();
+                  if (prodSnap.exists) {
+                    const currentStock = Number(prodSnap.data().stock ?? 0);
+                    await prodRef.update({ stock: currentStock + qty, updatedAt: new Date() });
+                  }
+                } catch {}
+              }
+            }
+            stockDeducted = false;
+            invalidateProductCache();
+          }
+
+          await reference.update({ status, stockDeducted, updatedAt });
           invalidateAdminOrdersCache();
-          const merged = { ...existing.data(), status, updatedAt };
+          const merged = { ...orderData, status, stockDeducted, updatedAt };
           const baseOrder = toOrder({ id: reference.id, data: () => merged }, true);
           const enriched = (await enrichStoredOrders([baseOrder]))[0];
           return response.json(enriched || baseOrder);
@@ -1090,6 +1148,141 @@ app.delete("/api/admin/products/:id", requireAdmin, async (request, response, ne
     invalidateProductCache();
     response.status(204).end();
   } catch (error) { next(error); }
+});
+
+// ─────────────────────────────────────────────────────────
+// CONTACT FORM / INQUIRIES – POST & ADMIN GET
+// ─────────────────────────────────────────────────────────
+
+async function sendTelegramMessage(text) {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chatId) return;
+  try {
+    const url = `https://api.telegram.org/bot${token}/sendMessage`;
+    await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML" }),
+    });
+  } catch (err) {
+    console.warn("[Telegram] Failed to send notification:", err.message);
+  }
+}
+
+// Rate limiter tracking map for contact inquiries (key: userId_date -> count)
+const userDailyInquiries = new Map();
+
+// Authenticated: submit a contact inquiry (max 2 per day per registered user)
+app.post("/api/inquiries", async (request, response, next) => {
+  try {
+    const identity = await getCustomerIdentity(request);
+    if (!identity) {
+      return response.status(401).json({
+        error: "Please log in to your Super Mart account to submit an inquiry.",
+      });
+    }
+
+    const todayDateKey = new Date().toISOString().slice(0, 10);
+    const rateLimitKey = `${identity.id || identity.email}_${todayDateKey}`;
+    const memCount = userDailyInquiries.get(rateLimitKey) || 0;
+
+    if (memCount >= 2) {
+      return response.status(429).json({
+        error: "You have reached your daily limit of 2 inquiries for today. For urgent queries, please call us at +91 96493 74696 or chat on WhatsApp.",
+      });
+    }
+
+    let todayCount = memCount;
+    if (db) {
+      try {
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        const querySnapshot = await collection("inquiries")
+          .where("customerId", "==", String(identity.id))
+          .where("createdAt", ">=", startOfToday)
+          .get();
+        if (querySnapshot.size >= 2) {
+          userDailyInquiries.set(rateLimitKey, querySnapshot.size);
+          return response.status(429).json({
+            error: "You have reached your daily limit of 2 inquiries for today. For urgent queries, please call us at +91 96493 74696 or chat on WhatsApp.",
+          });
+        }
+        todayCount = Math.max(todayCount, querySnapshot.size);
+      } catch {
+        // Fall back gracefully if firestore composite index is not set
+      }
+    }
+
+    const { name, email, phone, subject, message } = request.body || {};
+    if (!message || !String(message).trim()) {
+      return response.status(400).json({ error: "Please provide your inquiry message." });
+    }
+
+    const inquiry = {
+      customerId: String(identity.id),
+      name: String(name || identity.name || "Customer").trim(),
+      email: String(identity.email || email || "").trim().toLowerCase(),
+      phone: String(phone || "").trim(),
+      subject: String(subject || "General Inquiry").trim(),
+      message: String(message).trim(),
+      createdAt: new Date(),
+      source: "website-contact-form",
+    };
+
+    let docId = `inq-${Date.now()}`;
+    if (db) {
+      const docRef = await collection("inquiries").add(inquiry);
+      docId = docRef.id;
+    }
+
+    userDailyInquiries.set(rateLimitKey, todayCount + 1);
+    const remainingToday = Math.max(0, 2 - (todayCount + 1));
+
+    // Telegram notification
+    const telegramText = [
+      "📬 <b>New Inquiry – Super Mart Website</b>",
+      "",
+      `👤 <b>Name:</b> ${inquiry.name}`,
+      `📧 <b>Email:</b> ${inquiry.email}`,
+      inquiry.phone ? `📞 <b>Phone:</b> ${inquiry.phone}` : null,
+      `📌 <b>Subject:</b> ${inquiry.subject}`,
+      "",
+      `💬 <b>Message:</b>\n${inquiry.message.slice(0, 800)}`,
+      "",
+      `🕐 ${new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })}`,
+    ].filter((line) => line !== null).join("\n");
+
+    sendTelegramMessage(telegramText).catch(() => undefined);
+    notifyOnTelegram([
+      "New Super Mart inquiry", `Name: ${inquiry.name}`, `Phone: ${inquiry.phone || "Not provided"}`,
+      `Email: ${inquiry.email}`, `Subject: ${inquiry.subject}`, "", inquiry.message,
+    ].join("\n")).catch(() => undefined);
+
+    return response.status(201).json({
+      success: true,
+      id: docId,
+      message: "Thank you! Your message has been received. Our team will contact you shortly.",
+      remainingToday,
+    });
+  } catch (error) { return next(error); }
+});
+
+// Admin: list all inquiries (newest first)
+app.get("/api/admin/inquiries", requireAdmin, async (request, response, next) => {
+  try {
+    if (!db) return response.json([]);
+    try {
+      const snapshot = await collection("inquiries").orderBy("createdAt", "desc").limit(200).get();
+      const inquiries = snapshot.docs.map((doc) => ({ id: doc.id, ...documentData(doc) }));
+      return response.json(inquiries);
+    } catch {
+      const snapshot = await collection("inquiries").limit(200).get();
+      const inquiries = snapshot.docs.map((doc) => ({ id: doc.id, ...documentData(doc) }));
+      inquiries.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      return response.json(inquiries);
+    }
+  } catch (error) { return next(error); }
 });
 
 app.use((error, _request, response, _next) => {

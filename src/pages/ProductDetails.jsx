@@ -152,12 +152,39 @@ function ProductDetails({ products, addToCart, addToWishlist, wishlist = [], rev
               )}
             </div>
 
+            <div className="mt-4 flex items-center gap-2">
+              {Number(product.stock) <= 0 ? (
+                <span className="rounded-lg bg-rose-100 px-3 py-1 text-xs font-bold text-rose-700">
+                  ✕ Out of Stock
+                </span>
+              ) : Number(product.stock) <= 5 ? (
+                <span className="rounded-lg bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800">
+                  ⚡ Only {product.stock} units left in stock
+                </span>
+              ) : (
+                <span className="rounded-lg bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800">
+                  ✓ In Stock ({product.stock} units available)
+                </span>
+              )}
+            </div>
+
             <div className="product-detail-actions mt-8 flex gap-3 sm:gap-4">
               <button
+                disabled={Number(product.stock) <= 0}
                 onClick={handleAdd}
-                className={`cart-action min-w-0 flex-1 rounded-xl px-3 py-3 text-sm font-bold text-white sm:px-6 sm:py-4 sm:text-base ${added ? "is-added" : "bg-blue-600 hover:bg-blue-700"}`}
+                className={`cart-action min-w-0 flex-1 rounded-xl px-3 py-3 text-sm font-bold text-white sm:px-6 sm:py-4 sm:text-base ${
+                  Number(product.stock) <= 0
+                    ? "bg-slate-300 text-slate-500 cursor-not-allowed shadow-none"
+                    : added
+                    ? "is-added"
+                    : "bg-blue-600 hover:bg-blue-700"
+                }`}
               >
-                {added ? "✓ Added to cart" : "🛒 Add to Cart"}
+                {Number(product.stock) <= 0
+                  ? "Out of Stock"
+                  : added
+                  ? "✓ Added to cart"
+                  : "🛒 Add to Cart"}
               </button>
 
               <button onClick={() => addToWishlist(product)} aria-label={isWishlisted ? "Remove product from wishlist" : "Add product to wishlist"} className={`shrink-0 rounded-xl border-2 px-4 py-3 text-xl transition sm:px-6 sm:py-4 ${isWishlisted ? "border-red-500 bg-red-50 text-red-600 shadow-md" : "border-red-300 text-red-400 hover:bg-red-50 hover:text-red-500"}`}>
